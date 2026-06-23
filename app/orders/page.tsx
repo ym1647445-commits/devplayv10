@@ -53,21 +53,10 @@ function statusInfo(status?: string | null) {
   return { label: "قيد الانتظار", icon: Clock, className: "pending" };
 }
 
-function normalizeEgyptPhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-
-  if (!digits) return "";
-  if (digits.startsWith("20")) return `+${digits}`;
-  if (digits.startsWith("0")) return `+20${digits.slice(1)}`;
-
-  return `+20${digits}`;
-}
-
 export default function OrdersPage() {
   const supabase = createClient();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [searchPhone, setSearchPhone] = useState("");
   const [loading, setLoading] = useState(true);
   const [openOrder, setOpenOrder] = useState<number | null>(null);
 
@@ -76,43 +65,31 @@ export default function OrdersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loadOrders(customPhone?: string) {
+  async function loadOrders() {
     setLoading(true);
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
-
     const email = user?.email?.trim().toLowerCase() || "";
-    const phoneFromMeta = user?.user_metadata?.phone || "";
-    const normalizedMetaPhone = normalizeEgyptPhone(phoneFromMeta);
-    const normalizedSearchPhone = normalizeEgyptPhone(customPhone || searchPhone);
 
-    if (!user) {
+    if (!user || !email) {
       setOrders([]);
       setLoading(false);
       return;
     }
 
-    let query = supabase
+    const { data, error } = await supabase
       .from("orders")
       .select("*")
+      .eq("customer_email", email)
       .order("created_at", { ascending: false });
 
-    if (normalizedSearchPhone) {
-      query = query.or(
-        `customer_email.eq.${email},customer_phone.eq.${normalizedSearchPhone}`
-      );
-    } else if (email && normalizedMetaPhone) {
-      query = query.or(
-        `customer_email.eq.${email},customer_phone.eq.${normalizedMetaPhone}`
-      );
-    } else if (email) {
-      query = query.eq("customer_email", email);
-    } else {
-      query = query.eq("customer_phone", normalizedMetaPhone);
+    if (error) {
+      console.log("ORDERS ERROR:", error.message);
+      setOrders([]);
+      setLoading(false);
+      return;
     }
-
-    const { data } = await query;
 
     setOrders(data || []);
     setLoading(false);
@@ -131,19 +108,7 @@ export default function OrdersPage() {
 
           <h1 className="neon-text">متابعة الطلبات</h1>
 
-          <p>طلبات حسابك فقط، ويمكنك البحث برقم الهاتف المرتبط بالطلب.</p>
-
-          <div className="orders-search">
-            <input
-              placeholder="رقم الهاتف للبحث..."
-              value={searchPhone}
-              onChange={(e) => setSearchPhone(e.target.value)}
-            />
-
-            <button className="btn" onClick={() => loadOrders(searchPhone)}>
-              بحث
-            </button>
-          </div>
+          <p>هنا تظهر الطلبات المرتبطة ببريد حسابك فقط.</p>
         </section>
 
         <section className="section">
@@ -152,7 +117,7 @@ export default function OrdersPage() {
           ) : orders.length === 0 ? (
             <div className="glass-card orders-empty">
               <h2>لا توجد طلبات</h2>
-              <p>تأكدي إن الطلب اتعمل بنفس بريد الحساب أو رقم الهاتف.</p>
+              <p>أي طلب يتم بنفس بريد حسابك سيظهر هنا تلقائيًا.</p>
 
               <Link href="/products" className="btn">
                 تصفح الألعاب
@@ -250,9 +215,7 @@ export default function OrdersPage() {
 
                                 <button
                                   onClick={() =>
-                                    navigator.clipboard.writeText(
-                                      order.delivery_code || ""
-                                    )
+                                    navigator.clipboard.writeText(order.delivery_code || "")
                                   }
                                 >
                                   <Copy size={15} />
