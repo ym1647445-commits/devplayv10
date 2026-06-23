@@ -170,7 +170,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          {user?.email === "ايميلك@gmail.com" && (
+          {user?.email === "yasovip0123@gmail.com" && (
   <Link href="/admin" className="admin-pill">
     <ShieldCheck size={17} />
     Admin
