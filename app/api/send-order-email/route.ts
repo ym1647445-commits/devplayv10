@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const { error } = await resend.emails.send({
-      from: "DevPlay Studio <onboarding@resend.dev>",
+      from: "DevPlay Store <support@devplaystudio.com>",
       to,
       subject: `تم شحن طلبك #${orderId} بنجاح`,
       html: `

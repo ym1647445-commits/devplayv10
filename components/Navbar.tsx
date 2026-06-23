@@ -131,7 +131,6 @@ export default function Navbar() {
         <nav className="desktop-nav">
           <Link href="/">الرئيسية</Link>
           <Link href="/products">الألعاب</Link>
-          <Link href="/offers">العروض</Link>
           <Link href="/orders">طلباتي</Link>
         </nav>
 
@@ -171,10 +170,12 @@ export default function Navbar() {
             </Link>
           )}
 
-          <Link href="/admin" className="admin-pill">
-            <ShieldCheck size={17} />
-            Admin
-          </Link>
+          {user?.email === "ايميلك@gmail.com" && (
+  <Link href="/admin" className="admin-pill">
+    <ShieldCheck size={17} />
+    Admin
+  </Link>
+)}
         </div>
       </div>
     </motion.header>
