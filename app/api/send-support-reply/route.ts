@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const { error } = await resend.emails.send({
-      from: from: "DevPlay Support <support@devplaystudio.com>",
+      from: "DevPlay Support <support@devplaystudio.com>",
       to,
       subject: `رد الدعم الفني على رسالتك #${requestId}`,
       html: `
