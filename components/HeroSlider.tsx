@@ -27,8 +27,14 @@ const slides = [
     title: "بطاقات رقمية وكروت Steam",
     subtitle: "Steam USD • Anghami Plus • Codes Manual Delivery",
     badge: "Digital Codes",
-    image: "/assets/heroes/PUBGhero.png",
+    image: "/assets/heroes/steamhero.png",
   },
+  {
+  title: "دعم فني سريع 24/7",
+  subtitle: "متابعة الطلبات والرد على البلاغات والاقتراحات بسرعة",
+  badge: "دعم فني",
+  image: "/assets/heroes/supporthero.png",
+},
 ];
 
 export default function HeroSlider() {
@@ -77,9 +83,9 @@ export default function HeroSlider() {
                       <ArrowLeft size={18} />
                     </Link>
 
-                    <Link href="/offers" className="hero-secondary">
-                      شوف العروض
-                    </Link>
+                    <Link href="/products" className="hero-secondary">
+  تصفح الألعاب
+</Link>
                   </div>
                 </motion.div>
 
