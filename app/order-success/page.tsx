@@ -1,85 +1,70 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
-import {
-  CheckCircle2,
-  CreditCard,
-  Home,
-  PackageCheck,
-  ShieldCheck,
-} from "lucide-react";
-import { playSound } from "@/lib/playSound";
+import { CheckCircle2 } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import BottomNav from "@/components/BottomNav";
 
-export default function OrderSuccessPage() {
-  const params = useSearchParams();
-  const orderId = params.get("id");
+function OrderSuccessContent() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("id");
 
   return (
-    <main className="checkout-page">
-      <motion.section
-        className="checkout-card glass-card neon-border"
-        initial={{ opacity: 0, y: 35, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.35 }}
-      >
-        <div className="success-icon">
-          <CheckCircle2 size={62} />
-        </div>
+    <>
+      <Navbar />
 
-        <h1 className="neon-text success-title">تم إرسال الطلب</h1>
-
-        <p className="success-text">
-          تم استلام طلبك بنجاح، وسيتم مراجعة الدفع وتنفيذ الطلب يدويًا من الإدارة.
-        </p>
-
-        <div className="auth-review">
-          <div>
-            <span>رقم الطلب</span>
-            <strong>#{orderId || "غير متاح"}</strong>
+      <main className="container">
+        <section className="glass-card neon-border" style={{ padding: 28, textAlign: "center" }}>
+          <div className="success-icon">
+            <CheckCircle2 size={58} />
           </div>
 
-          <div>
-            <span>الحالة الحالية</span>
-            <strong>بانتظار مراجعة الدفع</strong>
+          <h1 className="neon-text">تم إرسال الطلب</h1>
+
+          <p>
+            تم استلام طلبك بنجاح وسيتم مراجعة الدفع وتنفيذ الطلب يدويًا.
+          </p>
+
+          {orderId && (
+            <div className="auth-review" style={{ marginTop: 18 }}>
+              <div>
+                <span>رقم الطلب</span>
+                <strong>#{orderId}</strong>
+              </div>
+            </div>
+          )}
+
+          <div className="success-actions" style={{ marginTop: 20 }}>
+            <Link href="/orders" className="btn">
+              متابعة الطلب
+            </Link>
+
+            <Link href="/products" className="auth-back">
+              تصفح الألعاب
+            </Link>
           </div>
+        </section>
 
-          <div>
-            <span>طريقة الدفع</span>
-            <strong>Vodafone Cash</strong>
-          </div>
+        <div className="bottom-space" />
+      </main>
 
-          <div>
-            <span>المراجعة</span>
-            <strong>تنفيذ يدوي آمن</strong>
-          </div>
-        </div>
+      <BottomNav />
+    </>
+  );
+}
 
-        <div className="success-info">
-          <ShieldCheck size={20} />
-          <span>
-            احتفظ برقم الطلب لمتابعة الحالة من صفحة طلباتي.
-          </span>
-        </div>
-
-        <div className="success-actions">
-          <Link href="/orders" className="btn">
-            <PackageCheck size={18} />
-            متابعة طلباتي
-          </Link>
-
-          <Link href="/products" className="auth-back">
-            <CreditCard size={18} />
-            طلب جديد
-          </Link>
-
-          <Link href="/" className="auth-back">
-            <Home size={18} />
-            الرئيسية
-          </Link>
-        </div>
-      </motion.section>
-    </main>
+export default function OrderSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="container">
+          <div className="game-loading skeleton" />
+        </main>
+      }
+    >
+      <OrderSuccessContent />
+    </Suspense>
   );
 }
