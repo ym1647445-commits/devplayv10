@@ -18,23 +18,17 @@ const slides = [
     image: "/assets/heroes/topuphero.png",
   },
   {
-    title: "عروض قوية على الألعاب",
-    subtitle: "باقات يومية وأسعار قابلة للتحديث من لوحة الأدمن",
-    badge: "عروض اليوم",
-    image: "/assets/heroes/offerhero.png",
-  },
-  {
     title: "بطاقات رقمية وكروت Steam",
     subtitle: "Steam USD • Anghami Plus • Codes Manual Delivery",
     badge: "Digital Codes",
     image: "/assets/heroes/steamhero.png",
   },
   {
-  title: "دعم فني سريع 24/7",
-  subtitle: "متابعة الطلبات والرد على البلاغات والاقتراحات بسرعة",
-  badge: "دعم فني",
-  image: "/assets/heroes/supporthero.png",
-},
+    title: "دعم فني سريع",
+    subtitle: "متابعة الطلبات والرد على البلاغات والاقتراحات بسرعة",
+    badge: "دعم DevPlay",
+    image: "/assets/heroes/supporthero.png",
+  },
 ];
 
 export default function HeroSlider() {
@@ -74,7 +68,6 @@ export default function HeroSlider() {
                   </span>
 
                   <h2>{slide.title}</h2>
-
                   <p>{slide.subtitle}</p>
 
                   <div className="hero-actions">
@@ -84,17 +77,13 @@ export default function HeroSlider() {
                     </Link>
 
                     <Link href="/products" className="hero-secondary">
-  تصفح الألعاب
-</Link>
+                      تصفح الألعاب
+                    </Link>
                   </div>
                 </motion.div>
 
                 <div className="hero-floating">
-                  <motion.div
-                    className="float-card"
-                    animate={{ y: [0, -14, 0] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
+                  <motion.div className="float-card" animate={{ y: [0, -14, 0] }} transition={{ duration: 3, repeat: Infinity }}>
                     <Gamepad2 />
                     <div>
                       <strong>PUBG UC</strong>
@@ -102,11 +91,7 @@ export default function HeroSlider() {
                     </div>
                   </motion.div>
 
-                  <motion.div
-                    className="float-card"
-                    animate={{ y: [0, 16, 0] }}
-                    transition={{ duration: 3.6, repeat: Infinity }}
-                  >
+                  <motion.div className="float-card" animate={{ y: [0, 16, 0] }} transition={{ duration: 3.6, repeat: Infinity }}>
                     <WalletCards />
                     <div>
                       <strong>Steam USD</strong>
@@ -114,11 +99,7 @@ export default function HeroSlider() {
                     </div>
                   </motion.div>
 
-                  <motion.div
-                    className="float-card"
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 2.8, repeat: Infinity }}
-                  >
+                  <motion.div className="float-card" animate={{ y: [0, -10, 0] }} transition={{ duration: 2.8, repeat: Infinity }}>
                     <ShieldCheck />
                     <div>
                       <strong>Manual Safe</strong>
@@ -126,11 +107,7 @@ export default function HeroSlider() {
                     </div>
                   </motion.div>
 
-                  <motion.div
-                    className="hero-orb"
-                    animate={{ scale: [1, 1.12, 1], opacity: [.55, 1, .55] }}
-                    transition={{ duration: 3.2, repeat: Infinity }}
-                  >
+                  <motion.div className="hero-orb" animate={{ scale: [1, 1.12, 1], opacity: [.55, 1, .55] }} transition={{ duration: 3.2, repeat: Infinity }}>
                     <Zap size={52} />
                   </motion.div>
                 </div>
