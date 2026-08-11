@@ -66,12 +66,36 @@ export async function dispatchCreatedOrder(orderId:string):Promise<void>{
   }
 }
 
+export async function dispatchPendingSupplierJobs(limit=25):Promise<{orders:number;jobs:number}>{
+  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!url||!key)throw new Error("Supabase server credentials are missing");
+  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+  const safeLimit=Math.min(50,Math.max(1,Math.floor(limit)));
+  const{data,error}=await db.from("product_supplier_jobs").select("id,order_id").eq("status","pending").order("created_at",{ascending:true}).limit(safeLimit);
+  if(error)throw error;
+  const orderIds=[...new Set((data??[]).map(row=>String(row.order_id)))];
+  for(const orderId of orderIds)await dispatchCreatedOrder(orderId);
+  return{orders:orderIds.length,jobs:data?.length??0};
+}
+
+async function providerOrdersForJobs(supplierIds:Set<string>){
+  const matches=new Map<string,Awaited<ReturnType<typeof getProviderOrders>>[number]>();
+  for(let page=1;page<=5&&matches.size<supplierIds.size;page++){
+    const orders=await getProviderOrders(page,100);
+    for(const order of orders){
+      for(const id of [order.fazerOrderId,order.id])if(supplierIds.has(String(id)))matches.set(String(id),order);
+    }
+    if(orders.length<100)break;
+  }
+  return matches;
+}
+
 export async function syncAllSupplierStatuses():Promise<{processed:number}> {
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;const key=process.env.SUPABASE_SERVICE_ROLE_KEY;if(!url||!key)throw new Error("Supabase server credentials are missing");
   const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
   const{data:jobs,error}=await db.from("product_supplier_jobs").select("id,order_id,order_item_id,product_id,offer_id,provider_offer_id,supplier_product_id,input_values,attempts_count,supplier_order_id").in("status",["supplier_pending","failed","completed"]).not("supplier_order_id","is",null).limit(100);
   if(error)throw error;if(!jobs?.length)return{processed:0};
-  const providerOrders=await getProviderOrders(1,100);const byId=new Map(providerOrders.flatMap(order=>[[order.fazerOrderId,order],[order.id,order]]));let processed=0;
+  const supplierIds=new Set(jobs.map(row=>String(row.supplier_order_id)));const byId=await providerOrdersForJobs(supplierIds);let processed=0;
   for(const row of jobs){const match=byId.get(String(row.supplier_order_id));if(!match)continue;const succeeded=["completed","success"].includes(match.status);const refunded=match.status==="refunded";const failed=["failed","cancelled","rejected"].includes(match.status);if(!succeeded&&!refunded&&!failed)continue;
     await db.from("product_supplier_jobs").update({status:succeeded?"completed":refunded?"refunded":"failed",supplier_status:match.status,supplier_response:{order:match},completed_at:succeeded||refunded?new Date().toISOString():null,last_error:failed?`Provider status: ${match.status}`:null,updated_at:new Date().toISOString()}).eq("id",row.id);
     await refreshOrder(db,row as Job);processed++;

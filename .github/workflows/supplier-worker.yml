@@ -1,0 +1,25 @@
+name: DevPlay Supplier Worker
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: devplay-supplier-worker
+  cancel-in-progress: false
+
+jobs:
+  dispatch-and-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Send pending jobs and sync Flexy statuses
+        env:
+          SUPPLIER_WORKER_SECRET: ${{ secrets.SUPPLIER_WORKER_SECRET }}
+        run: |
+          test -n "$SUPPLIER_WORKER_SECRET"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 5 --max-time 90 \
+            -H "Authorization: Bearer $SUPPLIER_WORKER_SECRET" \
+            https://devplaystudio.com/api/cron/supplier
