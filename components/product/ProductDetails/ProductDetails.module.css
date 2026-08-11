@@ -1,0 +1,657 @@
+.page {
+  display: grid;
+  gap: 12px;
+
+  width: 100%;
+  max-width: 1050px;
+
+  margin-inline: auto;
+  padding: 12px 10px 45px;
+}
+
+.topActions {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topActions > button,
+.topActions > div button {
+  display: grid;
+
+  width: 40px;
+  height: 40px;
+
+  padding: 0;
+
+  place-items: center;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: var(--surface);
+  color: var(--foreground);
+
+  cursor: pointer;
+}
+
+.topActions > div {
+  display: flex;
+  gap: 6px;
+}
+
+.favoriteActive {
+  border-color: var(--primary-border) !important;
+
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
+.notice {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 10px 11px;
+
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--success) 35%,
+      transparent
+    );
+
+  border-radius: 11px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--success) 9%,
+      transparent
+    );
+
+  color: var(--success);
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.productLayout {
+  display: grid;
+  gap: 14px;
+}
+
+.imagePanel {
+  position: relative;
+
+  display: grid;
+
+  width: 100%;
+
+  overflow: hidden;
+
+  aspect-ratio: 16 / 10;
+
+  border: 1px solid var(--border);
+  border-radius: 17px;
+
+  background: var(--surface-soft);
+}
+
+.imagePanel img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.noImage {
+  display: grid;
+
+  place-items: center;
+  align-content: center;
+
+  gap: 7px;
+
+  color: var(--muted);
+}
+
+.noImage span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.badge,
+.instant {
+  position: absolute;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  padding: 5px 8px;
+
+  border-radius: 999px;
+
+  color: #ffffff;
+
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.badge {
+  top: 9px;
+  right: 9px;
+
+  background: var(--primary);
+}
+
+.instant {
+  right: 9px;
+  bottom: 9px;
+
+  background: rgba(5, 7, 16, 0.78);
+
+  backdrop-filter: blur(12px);
+}
+
+.information {
+  display: grid;
+  gap: 11px;
+}
+
+.productHeading {
+  display: grid;
+  gap: 3px;
+}
+
+.category {
+  color: var(--primary);
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.productHeading h1 {
+  margin: 0;
+
+  font-size: 21px;
+  line-height: 1.4;
+}
+
+.englishName {
+  color: var(--muted);
+
+  font-size: 8px;
+}
+
+.rating {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  color: var(--warning);
+
+  font-size: 9px;
+}
+
+.rating strong {
+  color: var(--foreground);
+}
+
+.rating span {
+  color: var(--muted);
+}
+
+.shortDescription {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+.offerSection,
+.requiredFields,
+.instructions,
+.description {
+  display: grid;
+
+  gap: 9px;
+
+  padding: 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  background: var(--surface);
+}
+
+.sectionTitle {
+  display: grid;
+
+  gap: 3px;
+}
+
+.sectionTitle strong,
+.instructions > strong,
+.description > strong {
+  font-size: 11px;
+}
+
+.sectionTitle small {
+  color: var(--muted);
+
+  font-size: 8px;
+}
+
+.offersGrid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 7px;
+}
+
+.offerCard {
+  position: relative;
+
+  display: grid;
+
+  min-width: 0;
+  min-height: 73px;
+
+  align-content: space-between;
+
+  gap: 6px;
+
+  padding: 9px;
+
+  border: 1px solid var(--border);
+  border-radius: 11px;
+
+  background: var(--surface-soft);
+  color: var(--foreground);
+
+  text-align: right;
+
+  cursor: pointer;
+}
+
+.offerCard > div {
+  display: grid;
+  gap: 2px;
+}
+
+.offerCard > div strong {
+  font-size: 9px;
+
+  overflow-wrap: anywhere;
+}
+
+.offerCard > div small {
+  color: var(--muted);
+
+  font-size: 6px;
+
+  overflow-wrap: anywhere;
+}
+
+.offerCard > span {
+  color: var(--primary);
+
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.offerCard > svg {
+  position: absolute;
+
+  top: 7px;
+  left: 7px;
+
+  color: var(--primary);
+}
+
+.offerSelected {
+  border-color: var(--primary);
+
+  background: var(--primary-soft);
+}
+
+.pricePanel {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 12px;
+
+  border: 1px solid var(--primary-border);
+  border-radius: 14px;
+
+  background: var(--primary-soft);
+}
+
+.pricePanel > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.pricePanel > div:first-child small {
+  color: var(--muted);
+
+  font-size: 7px;
+}
+
+.pricePanel > div:first-child strong {
+  color: var(--primary);
+
+  font-size: 20px;
+}
+
+.pricePanel del {
+  color: var(--muted);
+
+  font-size: 8px;
+}
+
+.priceMeta {
+  display: grid;
+
+  justify-items: end;
+
+  gap: 4px;
+}
+
+.priceMeta > span {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  color: var(--success);
+
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.priceMeta small {
+  color: var(--muted);
+
+  font-size: 7px;
+}
+
+.customerNote {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 7px;
+
+  padding: 10px;
+
+  border: 1px solid color-mix(in srgb, var(--danger) 55%, var(--border));
+  border-radius: 11px;
+
+  background: color-mix(in srgb, var(--danger) 9%, var(--surface));
+
+  color: var(--foreground);
+
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+.customerNote svg {
+  flex-shrink: 0;
+
+  color: var(--danger);
+}
+
+.inputField {
+  display: grid;
+
+  gap: 5px;
+}
+
+.inputField > span {
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  color: var(--foreground);
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.inputField b {
+  color: var(--danger);
+}
+
+.inputField input {
+  width: 100%;
+  min-height: 42px;
+
+  padding-inline: 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  outline: 0;
+
+  background: var(--surface-soft);
+  color: var(--foreground);
+
+  font-size: 11px;
+}
+
+.inputField input:focus {
+  border-color: var(--primary-border);
+
+  box-shadow:
+    0 0 0 3px var(--primary-soft);
+}
+
+.inputField input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.inputField small {
+  color: var(--muted);
+
+  font-size: 7px;
+  line-height: 1.6;
+}
+
+.inputField .fieldError {
+  color: var(--danger);
+}
+
+.noFields {
+  padding: 11px;
+
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+
+  background: var(--surface-soft);
+
+  color: var(--muted);
+
+  font-size: 8px;
+
+  text-align: center;
+}
+
+.instructions p,
+.description p {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 9px;
+  line-height: 1.9;
+
+  white-space: pre-line;
+}
+
+.purchaseBar {
+  position: sticky;
+
+  bottom:
+    calc(
+      var(--bottom-nav-height) + 7px
+    );
+
+  z-index: 20;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 9px;
+
+  border: 1px solid var(--border);
+  border-radius: 15px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--background) 93%,
+      transparent
+    );
+
+  box-shadow: var(--shadow-medium);
+
+  backdrop-filter: blur(18px);
+}
+
+.purchaseBar > div {
+  display: grid;
+
+  gap: 2px;
+}
+
+.purchaseBar small {
+  color: var(--muted);
+
+  font-size: 7px;
+}
+
+.purchaseBar > div strong {
+  color: var(--primary);
+
+  font-size: 15px;
+}
+
+/* =========================
+   الموبايل الصغير
+========================= */
+
+@media (max-width: 420px) {
+  .page {
+    padding-inline: 8px;
+  }
+
+  .imagePanel {
+    aspect-ratio: 16 / 9;
+  }
+
+  .productHeading h1 {
+    font-size: 19px;
+  }
+
+  .offerCard {
+    min-height: 68px;
+
+    padding: 8px;
+  }
+
+  .offerCard > div strong {
+    font-size: 8px;
+  }
+
+  .offerCard > span {
+    font-size: 9px;
+  }
+
+  .pricePanel > div:first-child strong {
+    font-size: 17px;
+  }
+
+  .purchaseBar > div strong {
+    font-size: 13px;
+  }
+}
+
+/* =========================
+   الكمبيوتر
+========================= */
+
+@media (min-width: 760px) {
+  .page {
+    padding:
+      18px 14px 55px;
+  }
+
+  .productLayout {
+    grid-template-columns:
+      minmax(0, 0.82fr)
+      minmax(0, 1.18fr);
+
+    align-items: start;
+  }
+
+  .imagePanel {
+    position: sticky;
+
+    top: 85px;
+
+    aspect-ratio: 1 / 1;
+  }
+
+  .offersGrid {
+    grid-template-columns:
+      repeat(
+        auto-fill,
+        minmax(150px, 1fr)
+      );
+  }
+
+  .offerCard {
+    min-height: 80px;
+  }
+
+  .productHeading h1 {
+    font-size: 25px;
+  }
+
+  .shortDescription {
+    font-size: 11px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .purchaseBar {
+    bottom: 15px;
+  }
+}

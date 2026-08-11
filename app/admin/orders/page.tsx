@@ -1,409 +1,587 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import {
-  Search,
-  Save,
-  CreditCard,
-  PackageCheck,
-  User,
-  Phone,
-  Mail,
-  BadgeDollarSign,
   ClipboardList,
-  MessageSquareText,
+  PackagePlus,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { playSound } from "@/lib/playSound";
-import AdminGuard from "@/components/AdminGuard";
+import Link from "next/link";
 
-type Order = {
-  id: number;
-  customer_name: string | null;
-  customer_phone: string | null;
-  customer_email: string | null;
-  product_name: string | null;
-  total_price: number | null;
-  status: string | null;
-  payment_method: string | null;
-  payment_reference: string | null;
-  payment_image: string | null;
-  delivery_code: string | null;
-  delivery_note: string | null;
-  created_at: string | null;
-};
+import {
+  OrdersManager,
+} from "@/components/admin/orders/OrdersManager";
+import { SupplierJobsRunner } from "@/components/admin/orders/SupplierJobsRunner";
+import { createClient } from "@/lib/supabase/server";
+import type {
+  AdminOrder,
+  AdminOrderItem,
+  AdminOrderStats,
+  AdminOrderStatusHistory,
+} from "@/types/adminOrder";
 
-const PAYMENT_BUCKET = "payment-proofs";
+interface RawCustomer {
+  id: string;
+  customer_id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
 
-function statusLabel(status?: string | null) {
-  if (status === "Completed") return "مكتمل";
-  if (status === "Processing") return "قيد التنفيذ";
-  if (status === "Cancelled") return "ملغي";
-  if (status === "Waiting Payment") return "مراجعة الدفع";
-  return "قيد الانتظار";
+  customer_level: string;
+  points: number;
+  points_debt: number;
+
+  trust_score: number;
+  status: string;
 }
 
-function normalizeProofPath(value: string) {
-  if (!value) return "";
+interface RawOrderItem {
+  id: string;
 
-  if (value.includes("/object/public/")) {
-    const afterPublic = value.split("/object/public/")[1];
-    const parts = afterPublic.split("/");
-    parts.shift();
-    return parts.join("/");
-  }
+  product_id: string | null;
+  product_name: string;
+  offer_id: string | null;
+  offer_name: string | null;
+  provider_offer_id: string | null;
+  product_image_url: string | null;
 
-  if (value.includes("/object/sign/")) {
-    const afterSign = value.split("/object/sign/")[1];
-    const clean = afterSign.split("?")[0];
-    const parts = clean.split("/");
-    parts.shift();
-    return parts.join("/");
-  }
+  supplier_product_id: string | null;
 
-  return value;
+  quantity: number;
+
+  supplier_price_usd:
+    | number
+    | string;
+
+  profit_usd:
+    | number
+    | string;
+
+  unit_price_usd:
+    | number
+    | string;
+
+  total_price_usd:
+    | number
+    | string;
+
+  input_values:
+    | Record<string, string>
+    | null;
+
+  supplier_response:
+    | Record<string, unknown>
+    | null;
+
+  status: AdminOrderItem["status"];
+
+  created_at: string;
+  updated_at: string;
 }
 
-function AdminOrdersContent() {
-  const supabase = createClient();
+interface RawStatusHistory {
+  id: string;
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [proofUrls, setProofUrls] = useState<Record<number, string>>({});
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  old_status:
+    | AdminOrderStatusHistory["oldStatus"];
 
-  useEffect(() => {
-    loadOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  new_status:
+    AdminOrderStatusHistory["newStatus"];
 
-  async function loadOrders() {
-    setLoading(true);
+  note: string | null;
+  changed_by: string | null;
 
-    const { data } = await supabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false });
+  created_at: string;
+}
 
-    const rows = data || [];
-    setOrders(rows);
+interface RawOrder {
+  id: string;
+  order_id: string;
 
-    const urls: Record<number, string> = {};
+  user_id: string;
+  status: AdminOrder["status"];
 
-    for (const order of rows) {
-      if (!order.payment_image) continue;
+  subtotal_usd:
+    | number
+    | string;
 
-      const path = normalizeProofPath(order.payment_image);
+  discount_usd:
+    | number
+    | string;
 
-      const { data: signed } = await supabase.storage
-        .from(PAYMENT_BUCKET)
-        .createSignedUrl(path, 60 * 60);
+  total_usd:
+    | number
+    | string;
 
-      if (signed?.signedUrl) urls[order.id] = signed.signedUrl;
-    }
+  usd_to_egp_rate:
+    | number
+    | string;
 
-    setProofUrls(urls);
-    setLoading(false);
+  total_egp_snapshot:
+    | number
+    | string;
+
+  coupon_id: string | null;
+  coupon_code: string | null;
+
+  supplier_order_id: string | null;
+  supplier_status: string | null;
+
+  failure_reason: string | null;
+
+  customer_note: string | null;
+  admin_note: string | null;
+
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+
+  customer:
+    | RawCustomer
+    | RawCustomer[]
+    | null;
+
+  items:
+    | RawOrderItem[]
+    | null;
+
+  status_history:
+    | RawStatusHistory[]
+    | null;
+}
+
+function getRelation<T>(
+  relation: T | T[] | null,
+): T | null {
+  if (Array.isArray(relation)) {
+    return relation[0] ?? null;
   }
 
-  async function sendCompletedEmail(order: Order) {
-    if (order.status !== "Completed") return { ok: true };
-    if (!order.customer_email) return { ok: false, error: "لا يوجد بريد للعميل." };
-    if (!order.delivery_code?.trim()) {
-      return { ok: false, error: "اكتبي Delivery Code قبل جعل الطلب مكتمل." };
-    }
+  return relation;
+}
 
-    const res = await fetch("/api/send-order-email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        to: order.customer_email,
-        orderId: order.id,
-        productName: order.product_name,
-        deliveryCode: order.delivery_code,
-        deliveryNote: order.delivery_note,
-      }),
+export default async function AdminOrdersPage() {
+  const supabase =
+    await createClient();
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("product_orders")
+    .select(`
+      id,
+      order_id,
+      user_id,
+      status,
+
+      subtotal_usd,
+      discount_usd,
+      total_usd,
+      usd_to_egp_rate,
+      total_egp_snapshot,
+
+      coupon_id,
+      coupon_code,
+
+      supplier_order_id,
+      supplier_status,
+
+      failure_reason,
+      customer_note,
+      admin_note,
+
+      completed_at,
+      created_at,
+      updated_at,
+
+      customer:profiles(
+        id,
+        customer_id,
+        full_name,
+        email,
+        phone,
+        customer_level,
+        points,
+        points_debt,
+        trust_score,
+        status
+      ),
+
+      items:product_order_items(
+        id,
+        product_id,
+        product_name,
+        offer_id,
+        offer_name,
+        provider_offer_id,
+        product_image_url,
+        supplier_product_id,
+        quantity,
+        supplier_price_usd,
+        profit_usd,
+        unit_price_usd,
+        total_price_usd,
+        input_values,
+        supplier_response,
+        status,
+        created_at,
+        updated_at
+      ),
+
+      status_history:product_order_status_history(
+        id,
+        old_status,
+        new_status,
+        note,
+        changed_by,
+        created_at
+      )
+    `)
+    .order("created_at", {
+      ascending: false,
+    })
+    .returns<RawOrder[]>();
+
+  if (error) {
+    console.error(
+      "Failed to load admin orders:",
+      error,
+    );
+  }
+
+  const orders: AdminOrder[] =
+    (data ?? []).map((order) => {
+      const customer =
+        getRelation(order.customer);
+
+      return {
+        id: order.id,
+        orderId: order.order_id,
+
+        userId: order.user_id,
+        status: order.status,
+
+        subtotalUsd: Number(
+          order.subtotal_usd,
+        ),
+
+        discountUsd: Number(
+          order.discount_usd,
+        ),
+
+        totalUsd: Number(
+          order.total_usd,
+        ),
+
+        usdToEgpRate: Number(
+          order.usd_to_egp_rate,
+        ),
+
+        totalEgpSnapshot: Number(
+          order.total_egp_snapshot,
+        ),
+
+        couponId:
+          order.coupon_id,
+
+        couponCode:
+          order.coupon_code,
+
+        supplierOrderId:
+          order.supplier_order_id,
+
+        supplierStatus:
+          order.supplier_status,
+
+        failureReason:
+          order.failure_reason,
+
+        customerNote:
+          order.customer_note,
+
+        adminNote:
+          order.admin_note,
+
+        completedAt:
+          order.completed_at,
+
+        createdAt:
+          order.created_at,
+
+        updatedAt:
+          order.updated_at,
+
+        customer: customer
+          ? {
+              id: customer.id,
+
+              customerId:
+                customer.customer_id,
+
+              fullName:
+                customer.full_name,
+
+              email:
+                customer.email,
+
+              phone:
+                customer.phone,
+
+              level:
+                customer.customer_level,
+
+              points: Number(
+                customer.points,
+              ),
+
+              pointsDebt: Number(
+                customer.points_debt,
+              ),
+
+              trustScore: Number(
+                customer.trust_score,
+              ),
+
+              status:
+                customer.status,
+            }
+          : null,
+
+        items:
+          (order.items ?? []).map(
+            (item) => ({
+              id: item.id,
+
+              productId:
+                item.product_id,
+
+              productName:
+                item.product_name,
+
+              offerId:
+                item.offer_id,
+
+              offerName:
+                item.offer_name,
+
+              providerOfferId:
+                item.provider_offer_id,
+
+              productImageUrl:
+                item.product_image_url,
+
+              supplierProductId:
+                item.supplier_product_id,
+
+              quantity: Number(
+                item.quantity,
+              ),
+
+              supplierPriceUsd:
+                Number(
+                  item.supplier_price_usd,
+                ),
+
+              profitUsd:
+                Number(
+                  item.profit_usd,
+                ),
+
+              unitPriceUsd:
+                Number(
+                  item.unit_price_usd,
+                ),
+
+              totalPriceUsd:
+                Number(
+                  item.total_price_usd,
+                ),
+
+              inputValues:
+                item.input_values ?? {},
+
+              supplierResponse:
+                item.supplier_response ??
+                {},
+
+              status:
+                item.status,
+
+              createdAt:
+                item.created_at,
+
+              updatedAt:
+                item.updated_at,
+            }),
+          ),
+
+        statusHistory:
+          (
+            order.status_history ??
+            []
+          )
+            .map((history) => ({
+              id: history.id,
+
+              oldStatus:
+                history.old_status,
+
+              newStatus:
+                history.new_status,
+
+              note:
+                history.note,
+
+              changedBy:
+                history.changed_by,
+
+              createdAt:
+                history.created_at,
+            }))
+            .sort(
+              (first, second) =>
+                new Date(
+                  second.createdAt,
+                ).getTime() -
+                new Date(
+                  first.createdAt,
+                ).getTime(),
+            ),
+      };
     });
 
-    const json = await res.json();
+  const stats: AdminOrderStats = {
+    total: orders.length,
 
-    if (!res.ok) {
-      return { ok: false, error: json.error || "فشل إرسال البريد." };
-    }
+    pending:
+      orders.filter(
+        (order) =>
+          order.status === "pending",
+      ).length,
 
-    return { ok: true };
-  }
+    processing:
+      orders.filter(
+        (order) =>
+          order.status ===
+          "processing",
+      ).length,
 
-  async function updateOrder(order: Order) {
-    if (order.status === "Completed" && !order.delivery_code?.trim()) {
-      playSound("error");
-      alert("لازم تكتبي Delivery Code قبل إكمال الطلب.");
-      return;
-    }
+    supplierPending:
+      orders.filter(
+        (order) =>
+          order.status ===
+          "supplier_pending",
+      ).length,
 
-    const { error } = await supabase
-      .from("orders")
-      .update({
-        status: order.status,
-        delivery_code: order.delivery_code,
-        delivery_note: order.delivery_note,
-        completed_at: order.status === "Completed" ? new Date().toISOString() : null,
-      })
-      .eq("id", order.id);
+    completed:
+      orders.filter(
+        (order) =>
+          order.status ===
+          "completed",
+      ).length,
 
-    if (error) {
-      playSound("error");
-      alert(error.message);
-      return;
-    }
+    failed:
+      orders.filter(
+        (order) =>
+          order.status === "failed",
+      ).length,
 
-    const emailResult = await sendCompletedEmail(order);
+    cancelled:
+      orders.filter(
+        (order) =>
+          order.status ===
+          "cancelled",
+      ).length,
 
-    if (!emailResult.ok) {
-      playSound("error");
-      alert(`تم حفظ الطلب لكن لم يتم إرسال البريد: ${emailResult.error}`);
-      loadOrders();
-      return;
-    }
+    refunded:
+      orders.filter(
+        (order) =>
+          order.status ===
+          "refunded",
+      ).length,
 
-    await supabase.from("notifications").insert({
-  title: `تحديث الطلب #${order.id}`,
-  message: `تم تحديث حالة طلبك إلى: ${statusLabel(order.status)}`,
-  type: "order",
-  order_id: order.id,
-  customer_email: order.customer_email,
-  customer_phone: order.customer_phone,
-});
+    manualReview:
+      orders.filter(
+        (order) =>
+          order.status ===
+          "manual_review",
+      ).length,
 
-    playSound("success");
+    totalRevenueUsd:
+      orders
+        .filter(
+          (order) =>
+            order.status ===
+            "completed",
+        )
+        .reduce(
+          (total, order) =>
+            total +
+            order.totalUsd,
+          0,
+        ),
 
-    if (order.status === "Completed") {
-      alert("تم حفظ الطلب وإرسال الكود على البريد بنجاح.");
-    } else {
-      alert("تم حفظ التعديلات");
-    }
-
-    loadOrders();
-  }
-
-  const filtered = orders.filter((order) => {
-    const q = search.toLowerCase().trim();
-
-    if (!q) return true;
-
-    return (
-      String(order.id).includes(q) ||
-      order.customer_name?.toLowerCase().includes(q) ||
-      order.customer_phone?.includes(q) ||
-      order.customer_email?.toLowerCase().includes(q) ||
-      order.product_name?.toLowerCase().includes(q)
-    );
-  });
+    totalProfitUsd:
+      orders
+        .filter(
+          (order) =>
+            order.status ===
+            "completed",
+        )
+        .reduce(
+          (total, order) =>
+            total +
+            order.items.reduce(
+              (
+                itemTotal,
+                item,
+              ) =>
+                itemTotal +
+                item.profitUsd *
+                  item.quantity,
+              0,
+            ) -
+            order.discountUsd,
+          0,
+        ),
+  };
 
   return (
-    <main className="container admin-orders-page">
-      <section className="glass-card neon-border admin-orders-header">
+    <section className="admin-orders-page">
+      <header className="admin-orders-heading">
         <div>
-          <span className="badge">
-            <PackageCheck size={14} />
-            لوحة الأدمن
+          <span>
+            ORDER CONTROL CENTER
           </span>
 
-          <h1 className="neon-text">إدارة الطلبات</h1>
+          <h1>
+            إدارة الطلبات
+          </h1>
 
-          <p>مراجعة الدفع، تحديث الحالة، وإرسال كود التسليم للعميل.</p>
+          <p>
+            متابعة طلبات المنتجات، بيانات
+            التنفيذ، المورد والنقاط.
+          </p>
         </div>
 
-        <div className="admin-search">
-          <Search size={18} />
-          <input
-            placeholder="بحث برقم الطلب أو العميل..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </section>
+        <span>
+          <ClipboardList size={17} />
 
-      {loading ? (
-        <div className="game-loading skeleton" />
-      ) : filtered.length === 0 ? (
-        <div className="glass-card orders-empty">
-          <h2>لا توجد طلبات مطابقة</h2>
-          <p>جربي البحث برقم طلب أو رقم هاتف مختلف.</p>
-        </div>
-      ) : (
-        <div className="admin-orders-list">
-          {filtered.map((order) => (
-            <article key={order.id} className="glass-card admin-order-card">
-              <div className="admin-order-head">
-                <div>
-                  <h2>طلب #{order.id}</h2>
-                  <span>
-                    {order.created_at
-                      ? new Date(order.created_at).toLocaleString("ar-EG")
-                      : "-"}
-                  </span>
-                </div>
+          {orders.length.toLocaleString(
+            "ar-EG",
+          )}{" "}
+          طلب
+        </span>
+      </header>
 
-                <div className={`admin-status ${order.status || "Pending"}`}>
-                  {statusLabel(order.status)}
-                </div>
-              </div>
+      <Link href="/admin/orders/manual" className="admin-manual-order-link">
+        <PackagePlus size={18} />
+        إنشاء طلب يدوي لعميل
+      </Link>
 
-              <div className="admin-order-grid">
-                <div>
-                  <span>
-                    <User size={15} />
-                    العميل
-                  </span>
-                  <strong>{order.customer_name || "-"}</strong>
-                </div>
+      <SupplierJobsRunner />
 
-                <div>
-                  <span>
-                    <Phone size={15} />
-                    الهاتف
-                  </span>
-                  <strong>{order.customer_phone || "-"}</strong>
-                </div>
-
-                <div>
-                  <span>
-                    <Mail size={15} />
-                    البريد
-                  </span>
-                  <strong>{order.customer_email || "-"}</strong>
-                </div>
-
-                <div>
-                  <span>
-                    <ClipboardList size={15} />
-                    المنتج
-                  </span>
-                  <strong>{order.product_name || "-"}</strong>
-                </div>
-
-                <div>
-                  <span>
-                    <BadgeDollarSign size={15} />
-                    السعر
-                  </span>
-                  <strong>{order.total_price || 0} ج</strong>
-                </div>
-
-                <div>
-                  <span>
-                    <CreditCard size={15} />
-                    الدفع
-                  </span>
-                  <strong>{order.payment_method || "-"}</strong>
-                </div>
-
-                <div className="admin-wide">
-                  <span>
-                    <MessageSquareText size={15} />
-                    مرجع الدفع
-                  </span>
-                  <strong>{order.payment_reference || "-"}</strong>
-                </div>
-              </div>
-
-              {proofUrls[order.id] && (
-                <div className="admin-proof-box">
-                  <div className="admin-proof-head">
-                    <strong>صورة التحويل</strong>
-
-                    <a href={proofUrls[order.id]} target="_blank" rel="noreferrer">
-                      فتح الصورة
-                    </a>
-                  </div>
-
-                  <a
-                    href={proofUrls[order.id]}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="admin-proof-preview"
-                  >
-                    <img src={proofUrls[order.id]} alt={`proof-${order.id}`} />
-                  </a>
-                </div>
-              )}
-
-              <div className="admin-edit-section">
-                <div className="admin-field">
-                  <label>حالة الطلب</label>
-                  <select
-                    value={order.status || "Waiting Payment"}
-                    onChange={(e) =>
-                      setOrders((prev) =>
-                        prev.map((item) =>
-                          item.id === order.id
-                            ? { ...item, status: e.target.value }
-                            : item
-                        )
-                      )
-                    }
-                  >
-                    <option value="Waiting Payment">Waiting Payment</option>
-                    <option value="Processing">Processing</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
-
-                <div className="admin-field">
-                  <label>Delivery Code</label>
-                  <input
-                    placeholder="مثال: STEAM-XXXX-XXXX"
-                    value={order.delivery_code || ""}
-                    onChange={(e) =>
-                      setOrders((prev) =>
-                        prev.map((item) =>
-                          item.id === order.id
-                            ? { ...item, delivery_code: e.target.value }
-                            : item
-                        )
-                      )
-                    }
-                  />
-                </div>
-
-                <div className="admin-field admin-wide">
-                  <label>Delivery Note</label>
-                  <textarea
-                    placeholder="ملاحظة تظهر للعميل داخل صفحة الطلبات"
-                    value={order.delivery_note || ""}
-                    onChange={(e) =>
-                      setOrders((prev) =>
-                        prev.map((item) =>
-                          item.id === order.id
-                            ? { ...item, delivery_note: e.target.value }
-                            : item
-                        )
-                      )
-                    }
-                  />
-                </div>
-
-                <button className="btn admin-save-btn" onClick={() => updateOrder(order)}>
-                  <Save size={18} />
-                  حفظ وإرسال عند الإكمال
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-    </main>
-  );
-}
-
-export default function AdminOrdersPage() {
-  return (
-    <AdminGuard>
-      <AdminOrdersContent />
-    </AdminGuard>
+      <OrdersManager
+        orders={orders}
+        stats={stats}
+      />
+    </section>
   );
 }

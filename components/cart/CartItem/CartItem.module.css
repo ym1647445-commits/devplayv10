@@ -1,0 +1,289 @@
+.item {
+  overflow: hidden;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+
+  background: var(--surface);
+}
+
+.productRow {
+  position: relative;
+
+  display: grid;
+  grid-template-columns:
+    66px minmax(0, 1fr) 32px;
+  align-items: start;
+  gap: 10px;
+
+  padding: 10px;
+}
+
+.image {
+  width: 66px;
+  height: 66px;
+
+  border-radius: 13px;
+
+  object-fit: cover;
+}
+
+.details {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.category {
+  color: var(--primary);
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.name {
+  overflow: hidden;
+
+  font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unitPrice {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.bottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  margin-top: 3px;
+}
+
+.quantity {
+  display: grid;
+  grid-template-columns:
+    29px 27px 29px;
+  align-items: center;
+
+  overflow: hidden;
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  background: var(--surface-soft);
+}
+
+.quantity button {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+
+  border: 0;
+
+  background: transparent;
+  color: var(--foreground);
+}
+
+.quantity strong {
+  text-align: center;
+  font-size: 9px;
+}
+
+.total {
+  color: var(--primary);
+  font-size: 11px;
+}
+
+.deleteButton {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: color-mix(
+    in srgb,
+    var(--danger) 9%,
+    transparent
+  );
+
+  color: var(--danger);
+}
+
+.customerData {
+  display: grid;
+  gap: 9px;
+
+  padding: 10px;
+
+  border-top: 1px solid var(--border);
+
+  background: var(--surface-soft);
+}
+
+.dataHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+}
+
+.dataHeading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.dataHeading strong {
+  font-size: 9px;
+}
+
+.dataHeading small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.complete {
+  color: var(--success);
+}
+
+.incomplete {
+  color: var(--danger);
+}
+
+.dataHeading > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  min-height: 31px;
+  padding-inline: 9px;
+
+  border: 1px solid var(--primary-border);
+  border-radius: 9px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.savedValues {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.savedValues > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+
+  padding: 8px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--surface);
+}
+
+.savedValues span {
+  color: var(--muted);
+  font-size: 7px;
+}
+
+.savedValues strong {
+  overflow-wrap: anywhere;
+  font-size: 8px;
+}
+
+.inputsGrid {
+  display: grid;
+  gap: 8px;
+}
+
+.inputsGrid label {
+  display: grid;
+  gap: 5px;
+}
+
+.inputsGrid label > span {
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.inputsGrid input {
+  width: 100%;
+  min-height: 41px;
+  padding-inline: 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: 0;
+
+  background: var(--surface);
+  color: var(--foreground);
+
+  font-size: 9px;
+}
+
+.inputsGrid input:focus {
+  border-color: var(--primary-border);
+
+  box-shadow:
+    0 0 0 3px
+    var(--primary-soft);
+}
+
+.inputsGrid label small {
+  color: var(--muted);
+  font-size: 7px;
+}
+
+.inputsGrid .inputError {
+  color: var(--danger);
+}
+
+.dataActions {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.dataActions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  min-height: 39px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--surface);
+  color: var(--muted);
+
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.dataActions button:last-child {
+  border-color: var(--primary-border);
+
+  background: var(--primary);
+  color: #ffffff;
+}

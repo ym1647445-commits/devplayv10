@@ -1,0 +1,583 @@
+.shell {
+  min-height: 100svh;
+  padding-bottom: 76px;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(
+        in srgb,
+        var(--primary) 14%,
+        transparent
+      ),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(34, 211, 238, 0.07),
+      transparent 28%
+    ),
+    #08090f;
+
+  color: var(--foreground);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  min-height: 60px;
+  padding: 8px 12px;
+
+  border-bottom: 1px solid
+    rgba(255, 255, 255, 0.07);
+
+  background:
+    rgba(8, 9, 15, 0.83);
+
+  backdrop-filter: blur(22px);
+}
+
+.headerStart,
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.menuButton,
+.headerIcon {
+  position: relative;
+
+  display: grid;
+  flex: 0 0 auto;
+
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  place-items: center;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 255, 255, 0.04);
+
+  color: #f8fafc;
+}
+
+.headerIcon > span {
+  position: absolute;
+  top: 7px;
+  left: 8px;
+
+  width: 7px;
+  height: 7px;
+
+  border: 2px solid #0b0c13;
+  border-radius: 50%;
+
+  background: #ef4444;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.logo {
+  display: grid;
+  flex: 0 0 auto;
+
+  width: 38px;
+  height: 38px;
+  place-items: center;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--secondary)
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 10px 30px
+    color-mix(
+      in srgb,
+      var(--primary) 25%,
+      transparent
+    );
+
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.brand > span:last-child,
+.adminCopy,
+.navigationCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.brand strong {
+  overflow: hidden;
+
+  color: #ffffff;
+  font-size: 11px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand small {
+  margin-top: 4px;
+
+  color: #74788d;
+  font-size: 6px;
+  letter-spacing: 1.4px;
+}
+
+.adminIdentity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  max-width: 150px;
+  padding: 4px 7px;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.07);
+
+  border-radius: 13px;
+
+  background:
+    rgba(255, 255, 255, 0.035);
+}
+
+.adminAvatar {
+  display: grid;
+  flex: 0 0 auto;
+
+  width: 31px;
+  height: 31px;
+  place-items: center;
+
+  border-radius: 10px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--primary) 16%,
+      transparent
+    );
+
+  color: var(--primary);
+}
+
+.adminCopy {
+  display: none;
+}
+
+.adminCopy strong {
+  max-width: 80px;
+  overflow: hidden;
+
+  color: #ffffff;
+  font-size: 9px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adminCopy small {
+  margin-top: 3px;
+  color: #7c8197;
+  font-size: 7px;
+}
+
+.desktopSidebar {
+  display: none;
+}
+
+.content {
+  width: 100%;
+  max-width: 1350px;
+  margin-inline: auto;
+  padding: 14px 10px 26px;
+}
+
+.mobileDock {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  z-index: 70;
+
+  display: grid;
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  min-height: 60px;
+  padding: 6px;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 18px;
+
+  background:
+    rgba(17, 18, 29, 0.92);
+
+  box-shadow:
+    0 18px 55px rgba(0, 0, 0, 0.45);
+
+  backdrop-filter: blur(25px);
+}
+
+.mobileDock a {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border-radius: 12px;
+
+  color: #74798e;
+
+  font-size: 6px;
+  font-weight: 800;
+}
+
+.mobileDock svg {
+  width: 17px;
+  height: 17px;
+}
+
+.mobileDockActive {
+  background:
+    color-mix(
+      in srgb,
+      var(--primary) 14%,
+      transparent
+    );
+
+  color: var(--primary) !important;
+}
+
+.mobileOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+
+  display: flex;
+  justify-content: flex-start;
+
+  padding: 8px;
+
+  background: rgba(0, 0, 0, 0.66);
+  backdrop-filter: blur(7px);
+}
+
+.mobileDrawer {
+  display: flex;
+  width: min(88vw, 330px);
+  height: calc(100svh - 16px);
+  flex-direction: column;
+
+  padding: 12px;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.09);
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      160deg,
+      #151625,
+      #0d0e16
+    );
+
+  box-shadow:
+    20px 0 70px rgba(0, 0, 0, 0.55);
+
+  animation:
+    adminDrawerOpen 180ms ease-out;
+}
+
+@keyframes adminDrawerOpen {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding-bottom: 12px;
+
+  border-bottom: 1px solid
+    rgba(255, 255, 255, 0.07);
+}
+
+.drawerHeader > button {
+  display: grid;
+
+  width: 38px;
+  height: 38px;
+  place-items: center;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 11px;
+
+  background:
+    rgba(255, 255, 255, 0.04);
+
+  color: #ffffff;
+}
+
+.sidebarHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  padding: 5px 8px 15px;
+
+  border-bottom: 1px solid
+    rgba(255, 255, 255, 0.07);
+}
+
+.sidebarHeading span {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.sidebarHeading small {
+  color: #74788d;
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+
+.navigation {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  align-content: start;
+  gap: 5px;
+
+  margin-top: 11px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-border) transparent;
+}
+
+.navigation::-webkit-scrollbar {
+  width: 5px;
+}
+
+.navigation::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--primary-border);
+}
+
+.navigation > a {
+  display: grid;
+  grid-template-columns:
+    39px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 57px;
+  padding: 7px 9px;
+
+  border: 1px solid transparent;
+  border-radius: 13px;
+
+  color: #d3d5df;
+
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.navigation > a:active {
+  transform: scale(0.98);
+}
+
+.navigationIcon {
+  display: grid;
+
+  width: 39px;
+  height: 39px;
+  place-items: center;
+
+  border-radius: 11px;
+
+  background:
+    rgba(255, 255, 255, 0.04);
+
+  color: #7d8297;
+}
+
+.navigationCopy strong {
+  font-size: 9px;
+}
+
+.navigationCopy small {
+  margin-top: 4px;
+
+  overflow: hidden;
+
+  color: #71768a;
+  font-size: 7px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navigation > a > svg {
+  color: #565b6e;
+}
+
+.navigation .activeNavigationItem {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--primary) 27%,
+      transparent
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--primary) 11%,
+      transparent
+    );
+
+  color: #ffffff;
+}
+
+.activeNavigationItem
+.navigationIcon {
+  background:
+    color-mix(
+      in srgb,
+      var(--primary) 18%,
+      transparent
+    );
+
+  color: var(--primary);
+}
+
+.storeLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  min-height: 44px;
+  margin-top: auto;
+  padding-inline: 11px;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  color: #a8acba;
+
+  font-size: 8px;
+  font-weight: 900;
+}
+
+@media (min-width: 390px) {
+  .adminCopy {
+    display: flex;
+  }
+}
+
+@media (min-width: 900px) {
+  .shell {
+    display: grid;
+    grid-template-columns:
+      245px minmax(0, 1fr);
+    grid-template-rows:
+      68px minmax(0, 1fr);
+
+    padding-bottom: 0;
+  }
+
+  .header {
+    grid-column: 1 / -1;
+
+    min-height: 68px;
+    padding-inline: 18px;
+  }
+
+  .menuButton {
+    display: none;
+  }
+
+  .desktopSidebar {
+    position: sticky;
+    top: 68px;
+
+    display: flex;
+    height: calc(100svh - 68px);
+    flex-direction: column;
+
+    padding: 15px 12px;
+
+    border-left: 1px solid
+      rgba(255, 255, 255, 0.07);
+
+    background:
+      rgba(12, 13, 21, 0.72);
+
+    backdrop-filter: blur(22px);
+  }
+
+  .content {
+    max-width: none;
+    padding: 21px;
+  }
+
+  .mobileDock {
+    display: none;
+  }
+}

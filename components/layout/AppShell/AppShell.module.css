@@ -1,0 +1,40 @@
+.shell {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.content {
+  width: 100%;
+  min-height: calc(
+    100vh -
+    var(--header-height)
+  );
+
+  padding:
+    var(--space-page)
+    var(--space-page)
+    calc(
+      var(--bottom-nav-height) +
+      18px
+    );
+}
+
+@media (min-width: 768px) {
+  .content {
+    width: min(760px, calc(100% - 32px));
+    margin-inline: auto;
+
+    padding-bottom: calc(
+      var(--bottom-nav-height) +
+      30px
+    );
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    width: min(1180px, calc(100% - 32px));
+    padding: 28px 0 50px;
+  }
+}

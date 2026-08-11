@@ -1,0 +1,123 @@
+.wrapper {
+  display: grid;
+  gap: 8px;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.buttons button {
+  display: inline-flex;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding-inline: 10px;
+
+  border: 1px solid
+    var(--primary-border);
+  border-radius: 11px;
+
+  background:
+    var(--primary-soft);
+  color: var(--primary);
+
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.buttons button:first-child {
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--primary-strong)
+    );
+
+  color: #ffffff;
+}
+
+.buttons button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.result {
+  display: grid;
+  gap: 5px;
+
+  padding: 10px;
+
+  border-radius: 11px;
+
+  font-size: 7px;
+  line-height: 1.6;
+}
+
+.result strong {
+  font-size: 8px;
+}
+
+.result span {
+  color: var(--muted);
+}
+
+.success {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--success) 30%,
+      transparent
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--success) 9%,
+      var(--surface)
+    );
+
+  color: var(--success);
+}
+
+.error {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--danger) 30%,
+      transparent
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--danger) 9%,
+      var(--surface)
+    );
+
+  color: var(--danger);
+}
+
+.spinner {
+  animation:
+    categorySyncSpinner
+    0.8s linear infinite;
+}
+
+@keyframes categorySyncSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 650px) {
+  .buttons {
+    grid-template-columns:
+      1fr;
+  }
+}

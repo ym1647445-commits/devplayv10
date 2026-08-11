@@ -1,0 +1,376 @@
+.wrapper {
+  display: grid;
+  gap: 12px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.filters {
+  display: flex;
+  min-width: 0;
+  gap: 6px;
+}
+
+.filters button,
+.markAllButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  min-height: 39px;
+  padding-inline: 9px;
+
+  border: 1px solid var(--border);
+  border-radius: 11px;
+
+  background: var(--surface);
+  color: var(--muted);
+
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.filters button strong {
+  display: grid;
+
+  min-width: 19px;
+  height: 19px;
+  padding-inline: 4px;
+  place-items: center;
+
+  border-radius: 999px;
+
+  background: var(--surface-soft);
+  color: var(--foreground);
+
+  font-size: 7px;
+}
+
+.filters .activeFilter {
+  border-color: var(--primary-border);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.activeFilter strong {
+  background: var(--primary);
+  color: white;
+}
+
+.markAllButton {
+  flex: 0 0 auto;
+
+  border-color: var(--primary-border);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.markAllButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 44px;
+  padding-inline: 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 13px;
+
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.search:focus-within {
+  border-color: var(--primary-border);
+
+  box-shadow:
+    0 0 0 3px
+    var(--primary-soft);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+  color: var(--foreground);
+
+  font-size: 9px;
+}
+
+.message {
+  margin: 0;
+  padding: 9px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--surface);
+  color: var(--muted);
+
+  font-size: 8px;
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+}
+
+.card {
+  overflow: hidden;
+
+  border: 1px solid var(--border);
+  border-radius: 15px;
+
+  background: var(--surface);
+}
+
+.unreadCard {
+  border-color: var(--primary-border);
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--primary-soft),
+      var(--surface)
+    );
+}
+
+.mainButton {
+  display: grid;
+  grid-template-columns:
+    42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+
+  width: 100%;
+  min-height: 86px;
+  padding: 10px;
+
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+
+  text-align: right;
+}
+
+.icon {
+  position: relative;
+
+  display: grid;
+
+  width: 42px;
+  height: 42px;
+  place-items: center;
+
+  border-radius: 12px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.icon i {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+
+  width: 9px;
+  height: 9px;
+
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+
+  background: var(--danger);
+}
+
+.copy {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.titleRow strong {
+  font-size: 9px;
+}
+
+.titleRow > span {
+  padding: 3px 6px;
+
+  border-radius: 999px;
+
+  background: var(--primary);
+  color: #ffffff;
+
+  font-size: 6px;
+  font-weight: 900;
+}
+
+.copy p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.7;
+
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.copy small {
+  color: var(--muted);
+  font-size: 6px;
+}
+
+.mainButton > svg {
+  color: var(--muted);
+}
+
+.card footer {
+  display: flex;
+  justify-content: flex-end;
+
+  padding: 7px 10px;
+
+  border-top: 1px solid var(--border);
+
+  background: var(--surface-soft);
+}
+
+.card footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  min-height: 29px;
+  padding-inline: 8px;
+
+  border: 1px solid var(--primary-border);
+  border-radius: 8px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.empty {
+  display: grid;
+  min-height: 330px;
+  padding: 20px;
+  place-items: center;
+  align-content: center;
+
+  border: 1px dashed var(--border-strong);
+  border-radius: 17px;
+
+  background: var(--surface);
+
+  text-align: center;
+}
+
+.empty > span {
+  display: grid;
+
+  width: 65px;
+  height: 65px;
+  place-items: center;
+
+  border-radius: 20px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.empty h2 {
+  margin: 14px 0 7px;
+  font-size: 16px;
+}
+
+.empty p {
+  max-width: 300px;
+  margin: 0;
+
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.8;
+}
+
+.info {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  padding: 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: var(--surface);
+  color: var(--primary);
+}
+
+.info svg {
+  flex: 0 0 auto;
+}
+
+.info p {
+  margin: 0;
+
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 1.8;
+}
+
+.spinner {
+  animation:
+    notificationSpin
+    0.8s linear infinite;
+}
+
+@keyframes notificationSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 540px) {
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .markAllButton {
+    width: 100%;
+  }
+}

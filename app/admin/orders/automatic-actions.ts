@@ -1,0 +1,5 @@
+"use server";
+import { revalidatePath } from "next/cache";
+import { syncAllSupplierStatuses } from "@/lib/provider/automatic-dispatch";
+import { createClient } from "@/lib/supabase/server";
+export async function syncSupplierStatusesWithServer(){try{const supabase=await createClient();const{data:{user}}=await supabase.auth.getUser();if(!user)throw new Error("Authentication required");const{data:profile}=await supabase.from("profiles").select("role,status").eq("id",user.id).single<{role:string;status:string}>();if(!profile||profile.status!=="active"||!["admin","super_admin","owner"].includes(profile.role))throw new Error("Admin permission required");const result=await syncAllSupplierStatuses();for(const path of ["/admin/orders","/orders","/notifications"])revalidatePath(path);return{message:result.processed?`تم تحديث ${result.processed} طلب وحفظ أكواد التفعيل.`:"لا توجد حالات جديدة لدى المورد."}}catch(error){return{message:error instanceof Error?error.message:"تعذر تحديث حالات المورد."}}}

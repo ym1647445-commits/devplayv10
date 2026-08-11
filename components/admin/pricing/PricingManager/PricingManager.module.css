@@ -1,0 +1,969 @@
+.page {
+  display: grid;
+  gap: 14px;
+
+  width: 100%;
+  max-width: 1250px;
+  margin-inline: auto;
+}
+
+/* =========================
+   عنوان الصفحة
+========================= */
+
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.heading > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.heading > div:first-child > span {
+  color: var(--primary);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.heading h1 {
+  margin: 0;
+
+  font-size: 23px;
+}
+
+.heading p {
+  max-width: 550px;
+  margin: 0;
+
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.8;
+}
+
+.updatedCard {
+  display: flex;
+  min-width: 175px;
+  min-height: 48px;
+  align-items: center;
+  gap: 9px;
+
+  padding: 9px 11px;
+
+  border: 1px solid var(--primary-border);
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--surface),
+      var(--primary-soft)
+    );
+
+  color: var(--primary);
+}
+
+.updatedCard > span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.updatedCard small {
+  color: var(--muted);
+  font-size: 6px;
+}
+
+.updatedCard strong {
+  overflow: hidden;
+
+  color: var(--foreground);
+  font-size: 7px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================
+   الإحصائيات
+========================= */
+
+.stats {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stats article {
+  display: flex;
+  min-width: 0;
+  min-height: 82px;
+  align-items: center;
+  gap: 9px;
+
+  padding: 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--surface),
+      var(--surface-soft)
+    );
+
+  box-shadow:
+    0 12px 30px
+    rgba(0, 0, 0, 0.12);
+}
+
+.stats article > span {
+  display: grid;
+  flex: 0 0 auto;
+
+  width: 39px;
+  height: 39px;
+  place-items: center;
+
+  border-radius: 12px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.stats article > div {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.stats article small {
+  overflow: hidden;
+
+  color: var(--muted);
+  font-size: 6px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats article strong {
+  overflow: hidden;
+
+  font-size: 14px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================
+   التقسيم الرئيسي
+========================= */
+
+.layout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(280px, 350px);
+  align-items: start;
+  gap: 12px;
+}
+
+.mainColumn {
+  display: grid;
+  min-width: 0;
+  gap: 11px;
+}
+
+.previewColumn {
+  position: sticky;
+  top: 16px;
+
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+/* =========================
+   Panels
+========================= */
+
+.panel {
+  display: grid;
+  gap: 11px;
+
+  padding: 13px;
+
+  border: 1px solid var(--border);
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--surface),
+      color-mix(
+        in srgb,
+        var(--surface-soft) 70%,
+        transparent
+      )
+    );
+
+  box-shadow:
+    0 10px 28px
+    rgba(0, 0, 0, 0.08);
+}
+
+.panel > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  padding-bottom: 10px;
+
+  border-bottom: 1px solid var(--border);
+
+  color: var(--primary);
+}
+
+.panel > header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.panel > header strong {
+  color: var(--foreground);
+  font-size: 10px;
+}
+
+.panel > header small {
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 1.6;
+}
+
+.panel > label,
+.twoColumns > label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.panel label > span {
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.panel label > small {
+  color: var(--muted);
+  font-size: 6px;
+  line-height: 1.7;
+}
+
+.panel input,
+.panel select {
+  width: 100%;
+  min-height: 43px;
+  padding: 9px 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: 0;
+
+  background: var(--surface-soft);
+  color: var(--foreground);
+
+  font-size: 8px;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.panel input:focus,
+.panel select:focus {
+  border-color: var(--primary-border);
+
+  background:
+    color-mix(
+      in srgb,
+      var(--surface-soft) 88%,
+      var(--primary) 12%
+    );
+
+  box-shadow:
+    0 0 0 3px
+    var(--primary-soft);
+}
+
+.panel input:disabled,
+.panel select:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.twoColumns {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* =========================
+   أوضاع التسعير
+========================= */
+
+.modeGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.modeGrid button {
+  display: grid;
+  min-height: 115px;
+  align-content: center;
+  justify-items: start;
+  gap: 7px;
+
+  padding: 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: var(--surface-soft);
+  color: var(--muted);
+
+  text-align: right;
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.modeGrid button:hover {
+  border-color: var(--primary-border);
+
+  transform: translateY(-1px);
+}
+
+.modeGrid button > svg {
+  color: var(--primary);
+}
+
+.modeGrid button strong {
+  color: var(--foreground);
+  font-size: 9px;
+}
+
+.modeGrid button small {
+  color: var(--muted);
+  font-size: 6px;
+  line-height: 1.7;
+}
+
+.modeGrid .activeMode {
+  border-color: var(--primary-border);
+
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      var(--primary-soft),
+      transparent 60%
+    ),
+    var(--surface);
+
+  box-shadow:
+    0 12px 28px
+    color-mix(
+      in srgb,
+      var(--primary) 12%,
+      transparent
+    );
+}
+
+.modeGrid .activeMode strong,
+.modeGrid .activeMode > svg {
+  color: var(--primary);
+}
+
+/* =========================
+   السويتش
+========================= */
+
+.switchRow {
+  display: flex !important;
+  min-height: 72px;
+  align-items: flex-start;
+  gap: 10px;
+
+  padding: 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: var(--surface-soft);
+
+  cursor: pointer;
+}
+
+.switchRow input {
+  flex: 0 0 auto;
+
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin-top: 2px;
+
+  accent-color: var(--primary);
+}
+
+.switchRow > span {
+  display: grid;
+  gap: 5px;
+}
+
+.switchRow strong {
+  color: var(--foreground);
+  font-size: 8px;
+}
+
+.switchRow small {
+  color: var(--muted);
+  font-size: 6px;
+  line-height: 1.7;
+}
+
+/* =========================
+   معاينة التسعير
+========================= */
+
+.preview {
+  display: grid;
+  gap: 11px;
+
+  padding: 13px;
+
+  border: 1px solid var(--primary-border);
+  border-radius: 16px;
+
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      var(--primary-soft),
+      transparent 55%
+    ),
+    linear-gradient(
+      145deg,
+      var(--surface),
+      var(--surface-soft)
+    );
+
+  box-shadow:
+    0 16px 42px
+    color-mix(
+      in srgb,
+      var(--primary) 12%,
+      transparent
+    );
+}
+
+.preview > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding-bottom: 10px;
+
+  border-bottom: 1px solid var(--border);
+
+  color: var(--primary);
+}
+
+.preview > header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.preview > header strong {
+  color: var(--foreground);
+  font-size: 10px;
+}
+
+.preview > header small {
+  color: var(--muted);
+  font-size: 6px;
+}
+
+.preview > label {
+  display: grid;
+  gap: 6px;
+}
+
+.preview > label > span {
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.preview input {
+  width: 100%;
+  min-height: 43px;
+  padding: 9px 10px;
+
+  border: 1px solid var(--primary-border);
+  border-radius: 10px;
+  outline: 0;
+
+  background: var(--surface);
+  color: var(--foreground);
+
+  font-size: 9px;
+}
+
+.preview input:focus {
+  box-shadow:
+    0 0 0 3px
+    var(--primary-soft);
+}
+
+.calculation {
+  display: grid;
+  gap: 6px;
+}
+
+.calculation > div {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding-inline: 9px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--surface);
+}
+
+.calculation span {
+  color: var(--muted);
+  font-size: 7px;
+}
+
+.calculation strong {
+  font-size: 9px;
+  direction: ltr;
+}
+
+.calculation > div:nth-child(2) strong {
+  color: var(--success);
+}
+
+.calculation .finalPrice {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+
+  min-height: 68px;
+
+  border-color: var(--primary-border);
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary-soft),
+      var(--surface)
+    );
+}
+
+.finalPrice > span {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.finalPrice > strong {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+
+  color: var(--primary);
+  font-size: 17px;
+}
+
+.finalPrice > small {
+  grid-row: 2;
+  grid-column: 1;
+
+  color: var(--muted);
+  font-size: 7px;
+}
+
+.pointsPreview {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 10px;
+
+  border: 1px solid
+    color-mix(
+      in srgb,
+      #f59e0b 28%,
+      transparent
+    );
+
+  border-radius: 11px;
+
+  background:
+    color-mix(
+      in srgb,
+      #f59e0b 9%,
+      var(--surface)
+    );
+
+  color: #fbbf24;
+}
+
+.pointsPreview > span {
+  display: grid;
+  gap: 4px;
+}
+
+.pointsPreview small {
+  color: var(--muted);
+  font-size: 6px;
+}
+
+.pointsPreview strong {
+  color: #fbbf24;
+  font-size: 9px;
+}
+
+/* =========================
+   معاينة الرسوم
+========================= */
+
+.feePreview {
+  display: grid;
+  gap: 7px;
+
+  padding: 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  background: var(--surface);
+}
+
+.feePreview > header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding-bottom: 9px;
+
+  border-bottom: 1px solid var(--border);
+
+  color: var(--primary);
+}
+
+.feePreview > header strong {
+  color: var(--foreground);
+  font-size: 9px;
+}
+
+.feePreview > div {
+  display: grid;
+  gap: 5px;
+
+  padding: 9px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--surface-soft);
+}
+
+.feePreview span {
+  color: var(--muted);
+  font-size: 6px;
+}
+
+.feePreview strong {
+  font-size: 8px;
+}
+
+/* =========================
+   بطاقة المعلومة
+========================= */
+
+.infoCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  padding: 11px;
+
+  border: 1px solid
+    color-mix(
+      in srgb,
+      #38bdf8 25%,
+      transparent
+    );
+
+  border-radius: 12px;
+
+  background:
+    color-mix(
+      in srgb,
+      #38bdf8 8%,
+      var(--surface)
+    );
+
+  color: #38bdf8;
+}
+
+.infoCard p {
+  margin: 0;
+
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 1.75;
+}
+
+/* =========================
+   الرسائل
+========================= */
+
+.message {
+  margin: 0;
+  padding: 10px;
+
+  border-radius: 11px;
+
+  font-size: 8px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.success {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--success) 30%,
+      transparent
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--success) 9%,
+      var(--surface)
+    );
+
+  color: var(--success);
+}
+
+.error {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--danger) 30%,
+      transparent
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--danger) 9%,
+      var(--surface)
+    );
+
+  color: var(--danger);
+}
+
+/* =========================
+   زر الحفظ
+========================= */
+
+.saveButton {
+  display: inline-flex;
+  width: 100%;
+  min-height: 47px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  border: 1px solid var(--primary-border);
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--primary-strong)
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 13px 32px
+    color-mix(
+      in srgb,
+      var(--primary) 18%,
+      transparent
+    );
+
+  font-size: 8px;
+  font-weight: 900;
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.saveButton:hover:not(:disabled) {
+  box-shadow:
+    0 18px 40px
+    color-mix(
+      in srgb,
+      var(--primary) 26%,
+      transparent
+    );
+
+  transform: translateY(-1px);
+}
+
+.saveButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.spinner {
+  animation:
+    pricingSpinner
+    0.8s linear infinite;
+}
+
+@keyframes pricingSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 1050px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .previewColumn {
+    position: static;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .preview,
+  .saveButton,
+  .message {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 800px) {
+  .stats {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .updatedCard {
+    width: 100%;
+  }
+
+  .modeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modeGrid button {
+    min-height: 92px;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    gap: 10px;
+  }
+
+  .stats article {
+    min-height: 70px;
+    padding: 8px;
+  }
+
+  .stats article > span {
+    width: 34px;
+    height: 34px;
+  }
+
+  .stats article strong {
+    font-size: 11px;
+  }
+
+  .twoColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .previewColumn {
+    grid-template-columns: 1fr;
+  }
+
+  .preview,
+  .saveButton,
+  .message {
+    grid-column: auto;
+  }
+
+  .panel {
+    padding: 10px;
+  }
+
+  .preview {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .heading h1 {
+    font-size: 20px;
+  }
+
+  .finalPrice > strong {
+    font-size: 14px;
+  }
+}

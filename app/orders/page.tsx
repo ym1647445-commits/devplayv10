@@ -1,245 +1,508 @@
-"use client";
-
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import {
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  PackageCheck,
-  Copy,
-  CreditCard,
-  Image as ImageIcon,
-  Eye,
+  PackageSearch,
+  WalletCards,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import BottomNav from "@/components/BottomNav";
-import { createClient } from "@/lib/supabase/client";
+import { redirect } from "next/navigation";
 
-type Order = {
-  id: number;
-  customer_name: string | null;
-  customer_phone: string | null;
-  customer_email: string | null;
-  product_name: string | null;
-  total_price: number | null;
-  status: string | null;
-  created_at: string | null;
-  delivery_code: string | null;
-  delivery_note: string | null;
-  payment_method: string | null;
-  payment_image: string | null;
-};
+import { AppShell } from "@/components/layout/AppShell";
+import { OrdersHistory } from "@/components/orders/OrdersHistory";
+import { createClient } from "@/lib/supabase/server";
+import type { CustomerOrderHistoryItem } from "@/types/orderHistory";
 
-function statusInfo(status?: string | null) {
-  if (status === "Completed") {
-    return { label: "مكتمل", icon: CheckCircle2, className: "completed" };
-  }
+interface DepositOrderRow {
+  id: string;
+  deposit_id: string;
 
-  if (status === "Processing") {
-    return { label: "قيد التنفيذ", icon: Loader2, className: "processing" };
-  }
+  status:
+    | "pending"
+    | "under_review"
+    | "approved"
+    | "rejected"
+    | "cancelled"
+    | "needs_information"
+    | "frozen";
 
-  if (status === "Cancelled") {
-    return { label: "ملغي", icon: XCircle, className: "cancelled" };
-  }
+  requested_currency: "EGP" | "USD";
+  requested_amount: number | string;
+  credit_usd: number | string;
 
-  if (status === "Waiting Payment") {
-    return { label: "مراجعة الدفع", icon: CreditCard, className: "waiting" };
-  }
+  admin_note: string | null;
+  rejection_reason: string | null;
 
-  return { label: "قيد الانتظار", icon: Clock, className: "pending" };
+  created_at: string;
+  updated_at: string;
+
+  payment_methods:
+    | {
+        name: string;
+        network: string | null;
+      }
+    | {
+        name: string;
+        network: string | null;
+      }[]
+    | null;
 }
 
-export default function OrdersPage() {
-  const supabase = createClient();
+interface ProductOrderItemRow {
+  id: string;
+  product_name: string;
+  offer_name: string | null;
+  provider_offer_id: string | null;
+  quantity: number;
+  unit_price_usd: number | string;
+  total_price_usd: number | string;
+  input_values: Record<string, string> | null;
+  supplier_response: unknown;
+}
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [openOrder, setOpenOrder] = useState<number | null>(null);
+interface ProductOrderRow {
+  id: string;
+  order_id: string;
 
-  useEffect(() => {
-    loadOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  status:
+    | "pending"
+    | "processing"
+    | "supplier_pending"
+    | "completed"
+    | "failed"
+    | "cancelled"
+    | "refunded"
+    | "manual_review";
 
-  async function loadOrders() {
-    setLoading(true);
+  subtotal_usd: number | string;
+  discount_usd: number | string;
+  total_usd: number | string;
 
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData.user;
-    const email = user?.email?.trim().toLowerCase() || "";
+  usd_to_egp_rate: number | string;
+  total_egp_snapshot: number | string;
 
-    if (!user || !email) {
-      setOrders([]);
-      setLoading(false);
-      return;
-    }
+  coupon_code: string | null;
+  customer_note: string | null;
+  admin_note: string | null;
+  failure_reason: string | null;
 
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("customer_email", email)
-      .order("created_at", { ascending: false });
+  created_at: string;
+  updated_at: string;
 
-    if (error) {
-      console.log("ORDERS ERROR:", error.message);
-      setOrders([]);
-      setLoading(false);
-      return;
-    }
+  product_order_items:
+    | ProductOrderItemRow[]
+    | null;
+}
 
-    setOrders(data || []);
-    setLoading(false);
+function getRelation<T>(
+  relation: T | T[] | null,
+): T | null {
+  if (Array.isArray(relation)) {
+    return relation[0] ?? null;
   }
 
-  return (
-    <>
-      <Navbar />
+  return relation;
+}
 
-      <main className="container orders-page-compact">
-        <section className="orders-header glass-card neon-border orders-compact-hero">
-          <span className="badge">
-            <PackageCheck size={14} />
-            طلباتي
-          </span>
+function getProductOrderTitle(
+  items: ProductOrderItemRow[],
+): string {
+  if (items.length === 0) {
+    return "طلب منتجات";
+  }
 
-          <h1 className="neon-text">متابعة الطلبات</h1>
+  if (items.length === 1) {
+    const item = items[0];
 
-          <p>هنا تظهر الطلبات المرتبطة ببريد حسابك فقط.</p>
-        </section>
+    return `${item.product_name}${item.offer_name ? ` — ${item.offer_name}` : ""} × ${item.quantity}`;
+  }
 
-        <section className="section">
-          {loading ? (
-            <div className="game-loading skeleton" />
-          ) : orders.length === 0 ? (
-            <div className="glass-card orders-empty">
-              <h2>لا توجد طلبات</h2>
-              <p>أي طلب يتم بنفس بريد حسابك سيظهر هنا تلقائيًا.</p>
+  return `${items[0].product_name} و${
+    items.length - 1
+  } منتج إضافي`;
+}
 
-              <Link href="/products" className="btn">
-                تصفح الألعاب
-              </Link>
-            </div>
-          ) : (
-            <div className="orders-list">
-              {orders.map((order, index) => {
-                const info = statusInfo(order.status);
-                const Icon = info.icon;
-                const isOpen = openOrder === order.id;
+function getProductOrderDescription(
+  order: ProductOrderRow,
+  items: ProductOrderItemRow[],
+): string {
+  const itemSummary = items
+    .map(
+      (item) =>
+        `${item.product_name}${item.offer_name ? ` — ${item.offer_name}` : ""} × ${item.quantity}`,
+    )
+    .join("، ");
 
-                return (
-                  <motion.div
-                    key={order.id}
-                    className="order-card glass-card order-card-compact"
-                    initial={{ opacity: 0, y: 18 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.02 }}
-                  >
-                    <div className="order-top">
-                      <div>
-                        <span>طلب رقم</span>
-                        <h3>#{order.id}</h3>
-                      </div>
+  const statusMessages: Record<
+    ProductOrderRow["status"],
+    string
+  > = {
+    pending:
+      "تم إنشاء الطلب وخصم الرصيد، وهو بانتظار بدء التنفيذ.",
 
-                      <div className={`order-status ${info.className}`}>
-                        <Icon size={15} />
-                        {info.label}
-                      </div>
-                    </div>
+    processing:
+      "يتم تنفيذ الطلب حاليًا.",
 
-                    <div className="order-main">
-                      <h2>{order.product_name}</h2>
-                      <strong>{order.total_price} ج</strong>
-                    </div>
+    supplier_pending:
+      "تم إرسال الطلب إلى المورد وهو بانتظار التنفيذ.",
 
-                    <div className="order-compact-actions">
-                      <button
-                        className="order-expand-btn"
-                        onClick={() => setOpenOrder(isOpen ? null : order.id)}
-                      >
-                        <Eye size={16} />
-                        {isOpen ? "إخفاء التفاصيل" : "عرض التفاصيل"}
-                      </button>
+    completed:
+      "تم تنفيذ الطلب بنجاح.",
 
-                      <Link href={`/orders/${order.id}`} className="order-details-link">
-                        صفحة الطلب
-                      </Link>
-                    </div>
+    failed:
+      order.failure_reason
+        ? `تعذر تنفيذ الطلب: ${order.failure_reason}`
+        : "تعذر تنفيذ الطلب.",
 
-                    {isOpen && (
-                      <>
-                        <div className="order-details">
-                          <div>
-                            <span>الاسم</span>
-                            <strong>{order.customer_name || "-"}</strong>
-                          </div>
+    cancelled:
+      "تم إلغاء الطلب.",
 
-                          <div>
-                            <span>رقم التواصل</span>
-                            <strong>{order.customer_phone || "-"}</strong>
-                          </div>
+    refunded:
+      "تم إلغاء الطلب وإعادة الرصيد إلى المحفظة.",
 
-                          <div>
-                            <span>طريقة الدفع</span>
-                            <strong>{order.payment_method || "-"}</strong>
-                          </div>
+    manual_review:
+      "الطلب متوقف للمراجعة اليدوية من الإدارة.",
+  };
 
-                          <div>
-                            <span>التاريخ</span>
-                            <strong>
-                              {order.created_at
-                                ? new Date(order.created_at).toLocaleString("ar-EG")
-                                : "-"}
-                            </strong>
-                          </div>
-                        </div>
+  const parts = [
+    statusMessages[order.status],
+    itemSummary
+      ? `المنتجات: ${itemSummary}.`
+      : null,
+    order.coupon_code
+      ? `الكوبون المستخدم: ${order.coupon_code}.`
+      : null,
+    order.customer_note
+      ? `ملاحظتك: ${order.customer_note}`
+      : null,
+  ].filter(Boolean);
 
-                        {order.payment_image && (
-                          <div className="payment-proof-note">
-                            <ImageIcon size={17} />
-                            تم استلام صورة التحويل وسيتم مراجعتها.
-                          </div>
-                        )}
+  return parts.join(" ");
+}
 
-                        {(order.delivery_code || order.delivery_note) && (
-                          <div className="delivery-box">
-                            <h4>بيانات التسليم</h4>
+export default async function OrdersPage() {
+  const supabase = await createClient();
 
-                            {order.delivery_code && (
-                              <div className="delivery-code">
-                                <strong>{order.delivery_code}</strong>
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-                                <button
-                                  onClick={() =>
-                                    navigator.clipboard.writeText(order.delivery_code || "")
-                                  }
-                                >
-                                  <Copy size={15} />
-                                  نسخ
-                                </button>
-                              </div>
-                            )}
+  if (userError || !user) {
+    redirect("/auth");
+  }
 
-                            {order.delivery_note && <p>{order.delivery_note}</p>}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+  const [
+    depositsResult,
+    productOrdersResult,
+  ] = await Promise.all([
+    supabase
+      .from("deposit_requests")
+      .select(`
+        id,
+        deposit_id,
+        status,
+        requested_currency,
+        requested_amount,
+        credit_usd,
+        admin_note,
+        rejection_reason,
+        created_at,
+        updated_at,
+        payment_methods(
+          name,
+          network
+        )
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", {
+        ascending: false,
+      })
+      .returns<DepositOrderRow[]>(),
 
-        <div className="bottom-space" />
-      </main>
+    supabase
+      .from("product_orders")
+      .select(`
+        id,
+        order_id,
+        status,
+        subtotal_usd,
+        discount_usd,
+        total_usd,
+        usd_to_egp_rate,
+        total_egp_snapshot,
+        coupon_code,
+        customer_note,
+        admin_note,
+        failure_reason,
+        created_at,
+        updated_at,
+        product_order_items(
+          id,
+          product_name,
+          offer_name,
+          provider_offer_id,
+          quantity,
+          unit_price_usd,
+          total_price_usd,
+          input_values,
+          supplier_response
+        )
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", {
+        ascending: false,
+      })
+      .returns<ProductOrderRow[]>(),
+  ]);
 
-      <BottomNav />
-    </>
+  if (depositsResult.error) {
+    console.error(
+      "Failed to load deposit orders:",
+      depositsResult.error,
+    );
+  }
+
+  if (productOrdersResult.error) {
+    console.error(
+      "Failed to load product orders:",
+      productOrdersResult.error,
+    );
+  }
+
+  const depositOrders: CustomerOrderHistoryItem[] =
+    (depositsResult.data ?? []).map(
+      (
+        deposit,
+      ): CustomerOrderHistoryItem => {
+        const method = getRelation(
+          deposit.payment_methods,
+        );
+
+        let description: string | null =
+          null;
+
+        if (
+          deposit.status === "approved"
+        ) {
+          description =
+            "تمت الموافقة على التحويل وإضافة الرصيد إلى محفظتك.";
+        } else if (
+          deposit.status ===
+          "under_review"
+        ) {
+          description =
+            "تتم مراجعة إثبات التحويل حاليًا.";
+        } else if (
+          deposit.status === "pending"
+        ) {
+          description =
+            "تم استلام الطلب وهو بانتظار مراجعة الإدارة.";
+        } else if (
+          deposit.status === "rejected"
+        ) {
+          description =
+            "تم رفض طلب إضافة الرصيد.";
+        }
+
+        return {
+          id: deposit.id,
+
+          orderNumber:
+            deposit.deposit_id,
+
+          type: "deposit",
+
+          status: deposit.status,
+
+          title: "طلب إضافة رصيد",
+
+          description,
+
+          requestedCurrency:
+            deposit.requested_currency,
+
+          requestedAmount: Number(
+            deposit.requested_amount,
+          ),
+
+          amountUsd: Number(
+            deposit.credit_usd,
+          ),
+
+          paymentMethod:
+            method?.name ?? null,
+
+          paymentNetwork:
+            method?.network ?? null,
+
+          rejectionReason:
+            deposit.rejection_reason,
+
+          adminNote:
+            deposit.admin_note,
+
+          createdAt:
+            deposit.created_at,
+
+          updatedAt:
+            deposit.updated_at,
+        };
+      },
+    );
+
+  const productOrders: CustomerOrderHistoryItem[] =
+    (productOrdersResult.data ?? []).map(
+      (
+        order,
+      ): CustomerOrderHistoryItem => {
+        const items =
+          order.product_order_items ?? [];
+
+        const totalUsd = Number(
+          order.total_usd,
+        );
+
+        const exchangeRate = Number(
+          order.usd_to_egp_rate,
+        );
+
+        return {
+          id: order.id,
+
+          orderNumber: order.order_id,
+
+          type: "product",
+
+          status: order.status,
+
+          title:
+            getProductOrderTitle(items),
+
+          description:
+            getProductOrderDescription(
+              order,
+              items,
+            ),
+
+          requestedCurrency: "USD",
+
+          requestedAmount: totalUsd,
+
+          amountUsd: totalUsd,
+
+          paymentMethod:
+            "محفظة DevPlay",
+
+          paymentNetwork: null,
+
+          rejectionReason:
+            order.failure_reason,
+
+          adminNote:
+            order.admin_note,
+
+          deliveredCodes: Array.from(new Set(items.flatMap(item=>extractDeliveredCodes(item.supplier_response)))),
+
+          createdAt:
+            order.created_at,
+
+          updatedAt:
+            order.updated_at,
+        };
+      },
+    );
+
+  const orders = [
+    ...productOrders,
+    ...depositOrders,
+  ].sort(
+    (first, second) =>
+      new Date(
+        second.createdAt,
+      ).getTime() -
+      new Date(
+        first.createdAt,
+      ).getTime(),
   );
+
+  const productCount =
+    productOrders.length;
+
+  const depositCount =
+    depositOrders.length;
+
+  return (
+    <AppShell>
+      <section className="orders-page">
+        <header className="orders-heading">
+          <div>
+            <span>
+              متابعة العمليات
+            </span>
+
+            <h1>طلباتي</h1>
+
+            <p>
+              تابعي طلبات المنتجات وطلبات
+              إضافة الرصيد من مكان واحد.
+            </p>
+          </div>
+
+          <span className="orders-total">
+            <PackageSearch size={16} />
+
+            {orders.length.toLocaleString(
+              "ar-EG",
+            )}{" "}
+            طلب
+          </span>
+        </header>
+
+        <section className="orders-overview">
+          <article>
+            <PackageSearch size={18} />
+
+            <span>
+              <strong>
+                {productCount.toLocaleString(
+                  "ar-EG",
+                )}
+              </strong>
+
+              <small>
+                طلبات المنتجات
+              </small>
+            </span>
+          </article>
+
+          <article>
+            <WalletCards size={18} />
+
+            <span>
+              <strong>
+                {depositCount.toLocaleString(
+                  "ar-EG",
+                )}
+              </strong>
+
+              <small>
+                طلبات إضافة الرصيد
+              </small>
+            </span>
+          </article>
+        </section>
+
+        <OrdersHistory
+          orders={orders}
+        />
+      </section>
+    </AppShell>
+  );
+}
+
+function extractDeliveredCodes(value: unknown, result = new Set<string>()): string[] {
+  if (Array.isArray(value)) { value.forEach(item=>extractDeliveredCodes(item,result)); return [...result]; }
+  if (!value || typeof value !== "object") return [...result];
+  const row=value as Record<string,unknown>;
+  for(const key of ["delivered_code","deliveredCode"]){if(typeof row[key]==="string"&&row[key])result.add(row[key] as string)}
+  for(const key of ["delivered_codes","deliveredCodes"]){const codes=row[key];if(Array.isArray(codes))codes.forEach(code=>{if(typeof code==="string"&&code)result.add(code)})}
+  Object.values(row).forEach(item=>extractDeliveredCodes(item,result));
+  return [...result];
 }

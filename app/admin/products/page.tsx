@@ -1,327 +1,458 @@
-"use client";
+import {
+  Boxes,
+  CloudDownload,
+} from "lucide-react";
+import Link from "next/link";
 
-import { useEffect, useState } from "react";
-import { Boxes, Plus, Save, Search, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { playSound } from "@/lib/playSound";
-import AdminGuard from "@/components/AdminGuard";
+import {
+  ProductsManager,
+} from "@/components/admin/products/ProductsManager";
+import { createClient } from "@/lib/supabase/server";
+import type {
+  AdminProduct,
+  AdminProductCategory,
+  AdminProductStats,
+} from "@/types/adminProduct";
+import type {
+  ProductRequiredField,
+  ProductStatus,
+} from "@/types/product";
 
-type Product = {
-  id: number;
-  category: string | null;
-  game: string | null;
-  name: string | null;
-  price_sell: number | null;
-  need: string | null;
-  delivery_type: string | null;
-  package_type: string | null;
-  active: boolean | null;
-};
+interface RawCategory {
+  id: string;
+  slug: string;
 
-const emptyProduct = {
-  category: "games",
-  game: "",
-  name: "",
-  price_sell: 0,
-  need: "player_id",
-  delivery_type: "manual",
-  package_type: "package",
-  active: true,
-};
+  name_ar: string;
+  name_en: string | null;
 
-function AdminProductsContent() {
-  const supabase = createClient();
+  image_url: string | null;
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [search, setSearch] = useState("");
-  const [newProduct, setNewProduct] = useState(emptyProduct);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  async function loadProducts() {
-    setLoading(true);
-
-    const { data } = await supabase
-      .from("products")
-      .select("id,category,game,name,price_sell,need,delivery_type,package_type,active")
-      .order("id", { ascending: false });
-
-    setProducts(data || []);
-    setLoading(false);
-  }
-
-  async function addProduct() {
-    if (!newProduct.game || !newProduct.name) {
-      playSound("error");
-      alert("اكتبي اسم اللعبة واسم الباقة.");
-      return;
-    }
-
-    const { error } = await supabase.from("products").insert(newProduct);
-
-    if (error) {
-      playSound("error");
-      alert(error.message);
-      return;
-    }
-
-    playSound("success");
-    setNewProduct(emptyProduct);
-    loadProducts();
-  }
-
-  async function saveProduct(product: Product) {
-    const { error } = await supabase
-      .from("products")
-      .update({
-        category: product.category,
-        game: product.game,
-        name: product.name,
-        price_sell: product.price_sell,
-        need: product.need,
-        delivery_type: product.delivery_type,
-        package_type: product.package_type,
-        active: product.active,
-      })
-      .eq("id", product.id);
-
-    if (error) {
-      playSound("error");
-      alert(error.message);
-      return;
-    }
-
-    playSound("success");
-    alert("تم حفظ المنتج");
-  }
-
-  async function deleteProduct(id: number) {
-    const ok = confirm("هل تريد حذف المنتج؟");
-    if (!ok) return;
-
-    const { error } = await supabase.from("products").delete().eq("id", id);
-
-    if (error) {
-      playSound("error");
-      alert(error.message);
-      return;
-    }
-
-    playSound("success");
-    loadProducts();
-  }
-
-  const filtered = products.filter((p) => {
-    const q = search.toLowerCase();
-    return (
-      p.game?.toLowerCase().includes(q) ||
-      p.name?.toLowerCase().includes(q) ||
-      p.category?.toLowerCase().includes(q)
-    );
-  });
-
-  function updateProduct(id: number, key: keyof Product, value: any) {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, [key]: value } : p))
-    );
-  }
-
-  return (
-    <main className="container admin-products-page">
-      <section className="glass-card neon-border admin-products-header">
-        <div>
-          <span className="badge">
-            <Boxes size={14} />
-            المنتجات
-          </span>
-
-          <h1 className="neon-text">إدارة المنتجات</h1>
-
-          <p>إضافة وتعديل الأسعار والباقات من لوحة الأدمن.</p>
-        </div>
-
-        <div className="admin-search">
-          <Search size={18} />
-          <input
-            placeholder="بحث عن لعبة أو باقة..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </section>
-
-      <section className="glass-card admin-product-form">
-        <h2>إضافة منتج جديد</h2>
-
-        <div className="admin-product-grid">
-          <input
-            placeholder="Category"
-            value={newProduct.category}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, category: e.target.value })
-            }
-          />
-
-          <input
-            placeholder="Game"
-            value={newProduct.game}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, game: e.target.value })
-            }
-          />
-
-          <input
-            placeholder="Package Name"
-            value={newProduct.name}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, name: e.target.value })
-            }
-          />
-
-          <input
-            type="number"
-            placeholder="Price"
-            value={newProduct.price_sell}
-            onChange={(e) =>
-              setNewProduct({
-                ...newProduct,
-                price_sell: Number(e.target.value),
-              })
-            }
-          />
-
-          <select
-            value={newProduct.need}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, need: e.target.value })
-            }
-          >
-            <option value="player_id">Player ID</option>
-            <option value="player_id_region">Player ID + Region</option>
-            <option value="ea_account_link">EA Account Link</option>
-            <option value="phone">Phone</option>
-            <option value="contact_or_email">Contact Or Email</option>
-          </select>
-
-          <input
-            placeholder="Package Type"
-            value={newProduct.package_type}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, package_type: e.target.value })
-            }
-          />
-        </div>
-
-        <button className="btn admin-product-add" onClick={addProduct}>
-          <Plus size={18} />
-          إضافة المنتج
-        </button>
-      </section>
-
-      {loading ? (
-        <div className="game-loading skeleton" />
-      ) : (
-        <section className="admin-products-list">
-          {filtered.map((product) => (
-            <div key={product.id} className="glass-card admin-product-card">
-              <div className="admin-product-title">
-                <div>
-                  <span>#{product.id}</span>
-                  <h3>{product.game}</h3>
-                </div>
-
-                <label className="admin-switch">
-                  <input
-                    type="checkbox"
-                    checked={!!product.active}
-                    onChange={(e) =>
-                      updateProduct(product.id, "active", e.target.checked)
-                    }
-                  />
-                  نشط
-                </label>
-              </div>
-
-              <div className="admin-product-grid">
-                <input
-                  value={product.category || ""}
-                  onChange={(e) =>
-                    updateProduct(product.id, "category", e.target.value)
-                  }
-                />
-
-                <input
-                  value={product.game || ""}
-                  onChange={(e) =>
-                    updateProduct(product.id, "game", e.target.value)
-                  }
-                />
-
-                <input
-                  value={product.name || ""}
-                  onChange={(e) =>
-                    updateProduct(product.id, "name", e.target.value)
-                  }
-                />
-
-                <input
-                  type="number"
-                  value={product.price_sell || 0}
-                  onChange={(e) =>
-                    updateProduct(product.id, "price_sell", Number(e.target.value))
-                  }
-                />
-
-                <select
-                  value={product.need || "player_id"}
-                  onChange={(e) =>
-                    updateProduct(product.id, "need", e.target.value)
-                  }
-                >
-                  <option value="player_id">Player ID</option>
-                  <option value="player_id_region">Player ID + Region</option>
-                  <option value="ea_account_link">EA Account Link</option>
-                  <option value="phone">Phone</option>
-                  <option value="contact_or_email">Contact Or Email</option>
-                </select>
-
-                <input
-                  value={product.package_type || ""}
-                  onChange={(e) =>
-                    updateProduct(product.id, "package_type", e.target.value)
-                  }
-                />
-              </div>
-
-              <div className="admin-product-actions">
-                <button className="btn" onClick={() => saveProduct(product)}>
-                  <Save size={18} />
-                  حفظ
-                </button>
-
-                <button
-                  className="admin-delete-btn"
-                  onClick={() => deleteProduct(product.id)}
-                >
-                  <Trash2 size={18} />
-                  حذف
-                </button>
-              </div>
-            </div>
-          ))}
-        </section>
-      )}
-    </main>
-  );
+  active: boolean;
+  sort_order: number;
 }
 
-export default function AdminProductsPage() {
+interface RawProduct {
+  id: string;
+
+  external_id: string | null;
+  supplier_product_id: string | null;
+
+  category_id: string | null;
+
+  slug: string;
+
+  name_ar: string;
+  name_en: string | null;
+
+  short_description_ar: string | null;
+  description_ar: string | null;
+
+  image_url: string | null;
+
+  supplier_price_usd:
+    | number
+    | string;
+
+  profit_usd:
+    | number
+    | string;
+
+  old_price_usd:
+    | number
+    | string
+    | null;
+
+  minimum_quantity: number;
+  maximum_quantity: number;
+
+  required_fields:
+    | ProductRequiredField[]
+    | null;
+
+  status: ProductStatus;
+
+  active: boolean;
+  featured: boolean;
+  instant_delivery: boolean;
+
+  delivery_time: string | null;
+  badge: string | null;
+
+  rating:
+    | number
+    | string;
+
+  reviews_count: number;
+
+  provider_data:
+    | Record<string, unknown>
+    | null;
+
+  created_at: string;
+  updated_at: string;
+
+  category:
+    | RawCategory
+    | RawCategory[]
+    | null;
+}
+
+function getRelation<T>(
+  relation: T | T[] | null,
+): T | null {
+  if (Array.isArray(relation)) {
+    return relation[0] ?? null;
+  }
+
+  return relation;
+}
+
+export default async function AdminProductsPage() {
+  const supabase =
+    await createClient();
+
+  const [
+    productsResult,
+    categoriesResult,
+  ] = await Promise.all([
+    supabase
+      .from("store_products")
+      .select(`
+        id,
+        external_id,
+        supplier_product_id,
+        category_id,
+        slug,
+        name_ar,
+        name_en,
+        short_description_ar,
+        description_ar,
+        image_url,
+        supplier_price_usd,
+        profit_usd,
+        old_price_usd,
+        minimum_quantity,
+        maximum_quantity,
+        required_fields,
+        status,
+        active,
+        featured,
+        instant_delivery,
+        delivery_time,
+        badge,
+        rating,
+        reviews_count,
+        provider_data,
+        created_at,
+        updated_at,
+
+        category:store_categories(
+          id,
+          slug,
+          name_ar,
+          name_en,
+          image_url,
+          active,
+          sort_order
+        )
+      `)
+      .order("created_at", {
+        ascending: false,
+      })
+      .returns<RawProduct[]>(),
+
+    supabase
+      .from("store_categories")
+      .select(`
+        id,
+        slug,
+        name_ar,
+        name_en,
+        image_url,
+        active,
+        sort_order
+      `)
+      .order("sort_order", {
+        ascending: true,
+      })
+      .returns<RawCategory[]>(),
+  ]);
+
+  if (productsResult.error) {
+    console.error(
+      "Failed to load products:",
+      productsResult.error,
+    );
+  }
+
+  if (categoriesResult.error) {
+    console.error(
+      "Failed to load categories:",
+      categoriesResult.error,
+    );
+  }
+
+  const categories:
+    AdminProductCategory[] =
+      (
+        categoriesResult.data ?? []
+      ).map((category) => ({
+        id: category.id,
+        slug: category.slug,
+
+        nameAr:
+          category.name_ar,
+
+        nameEn:
+          category.name_en,
+
+        imageUrl:
+          category.image_url,
+
+        active:
+          category.active,
+
+        sortOrder:
+          category.sort_order,
+      }));
+
+  const products:
+    AdminProduct[] =
+      (
+        productsResult.data ?? []
+      ).map((product) => {
+        const category =
+          getRelation(product.category);
+
+        const supplierPriceUsd =
+          Number(
+            product.supplier_price_usd,
+          );
+
+        const profitUsd =
+          Number(product.profit_usd);
+
+        return {
+          id: product.id,
+
+          externalId:
+            product.external_id,
+
+          supplierProductId:
+            product.supplier_product_id,
+
+          categoryId:
+            product.category_id,
+
+          category: category
+            ? {
+                id: category.id,
+                slug: category.slug,
+
+                nameAr:
+                  category.name_ar,
+
+                nameEn:
+                  category.name_en,
+
+                imageUrl:
+                  category.image_url,
+
+                active:
+                  category.active,
+
+                sortOrder:
+                  category.sort_order,
+              }
+            : null,
+
+          slug: product.slug,
+
+          nameAr:
+            product.name_ar,
+
+          nameEn:
+            product.name_en,
+
+          shortDescriptionAr:
+            product.short_description_ar,
+
+          descriptionAr:
+            product.description_ar,
+
+          imageUrl:
+            product.image_url,
+
+          supplierPriceUsd,
+
+          profitUsd,
+
+          finalPriceUsd:
+            supplierPriceUsd +
+            profitUsd,
+
+          oldPriceUsd:
+            product.old_price_usd ===
+            null
+              ? null
+              : Number(
+                  product.old_price_usd,
+                ),
+
+          minimumQuantity:
+            Number(
+              product.minimum_quantity,
+            ),
+
+          maximumQuantity:
+            Number(
+              product.maximum_quantity,
+            ),
+
+          requiredFields:
+            product.required_fields ??
+            [],
+
+          status:
+            product.status,
+
+          active:
+            product.active,
+
+          featured:
+            product.featured,
+
+          instantDelivery:
+            product.instant_delivery,
+
+          deliveryTime:
+            product.delivery_time,
+
+          badge:
+            product.badge,
+
+          rating:
+            Number(product.rating),
+
+          reviewsCount:
+            Number(
+              product.reviews_count,
+            ),
+
+          providerData:
+            product.provider_data ?? {},
+
+          createdAt:
+            product.created_at,
+
+          updatedAt:
+            product.updated_at,
+        };
+      });
+
+  const activeProducts =
+    products.filter(
+      (product) =>
+        product.active,
+    );
+
+  const stats: AdminProductStats = {
+    total: products.length,
+
+    active:
+      activeProducts.length,
+
+    inactive:
+      products.filter(
+        (product) =>
+          !product.active,
+      ).length,
+
+    available:
+      products.filter(
+        (product) =>
+          product.status ===
+          "available",
+      ).length,
+
+    busy:
+      products.filter(
+        (product) =>
+          product.status === "busy",
+      ).length,
+
+    unavailable:
+      products.filter(
+        (product) =>
+          product.status ===
+          "unavailable",
+      ).length,
+
+    featured:
+      products.filter(
+        (product) =>
+          product.featured,
+      ).length,
+
+    averageSupplierPriceUsd:
+      products.length === 0
+        ? 0
+        : products.reduce(
+            (total, product) =>
+              total +
+              product.supplierPriceUsd,
+            0,
+          ) / products.length,
+
+    averageProfitUsd:
+      products.length === 0
+        ? 0
+        : products.reduce(
+            (total, product) =>
+              total +
+              product.profitUsd,
+            0,
+          ) / products.length,
+  };
+
   return (
-    <AdminGuard>
-      <AdminProductsContent />
-    </AdminGuard>
+    <section className="admin-products-page">
+      <header className="admin-products-heading">
+        <div>
+          <span>
+            PRODUCT CONTROL CENTER
+          </span>
+
+          <h1>
+            إدارة المنتجات
+          </h1>
+
+          <p>
+            التحكم في الأسعار والربح
+            والتوفر وبيانات تنفيذ المنتجات.
+          </p>
+        </div>
+
+        <span>
+          <Boxes size={17} />
+
+          {products.length.toLocaleString(
+            "ar-EG",
+          )}{" "}
+          منتج
+        </span>
+      </header>
+
+      <div className="admin-products-quick-actions">
+        <Link href="/admin/provider-offers"><CloudDownload size={18}/> استيراد لعبة بكل باقاتها من Flexy</Link>
+        <span>لتعديل الصورة والاسم والتحذيرات والبيانات المطلوبة: افتحي المنتج ثم عدّلي المنتج الرئيسي أو الباقة المطلوبة.</span>
+      </div>
+
+      <ProductsManager
+        products={products}
+        categories={categories}
+        stats={stats}
+      />
+    </section>
   );
 }

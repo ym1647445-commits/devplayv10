@@ -1,187 +1,170 @@
-"use client";
-
-import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
-  Bell,
-  Clock,
-  Gamepad2,
-  Gift,
-  Megaphone,
-  PackageCheck,
+  BellRing,
+  CheckCircle2,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import BottomNav from "@/components/BottomNav";
-import { createClient } from "@/lib/supabase/client";
+import { redirect } from "next/navigation";
 
-type NotificationItem = {
-  id: number;
-  title: string | null;
-  message: string | null;
-  type: string | null;
-  order_id?: number | null;
-  customer_email?: string | null;
-  customer_phone?: string | null;
-  created_at: string | null;
-};
+import { AppShell } from "@/components/layout/AppShell";
+import { NotificationsList } from "@/components/notifications/NotificationsList";
+import { createClient } from "@/lib/supabase/server";
+import type { CustomerNotification } from "@/types/notification";
 
-function iconByType(type?: string | null) {
-  if (type === "offer") return Gift;
-  if (type === "game") return Gamepad2;
-  if (type === "order") return PackageCheck;
-  return Megaphone;
+interface NotificationRow {
+  id: string;
+
+  type: string;
+
+  title: string;
+  message: string;
+
+  entity_type:
+    | string
+    | null;
+
+  entity_id:
+    | string
+    | null;
+
+  action_url:
+    | string
+    | null;
+
+  is_read: boolean;
+
+  created_at: string;
+
+  read_at:
+    | string
+    | null;
 }
 
-function typeLabel(type?: string | null) {
-  if (type === "offer") return "عرض جديد";
-  if (type === "game") return "لعبة جديدة";
-  if (type === "order") return "طلب";
-  return "تنبيه عام";
-}
+export default async function NotificationsPage() {
+  const supabase =
+    await createClient();
 
-function normalizeEgyptPhone(value: string) {
-  const digits = value.replace(/\D/g, "");
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (!digits) return "";
-  if (digits.startsWith("20")) return `+${digits}`;
-  if (digits.startsWith("0")) return `+20${digits.slice(1)}`;
+  if (userError || !user) {
+    redirect("/auth");
+  }
 
-  return `+20${digits}`;
-}
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("notifications")
+    .select(`
+      id,
+      type,
+      title,
+      message,
+      entity_type,
+      entity_id,
+      action_url,
+      is_read,
+      created_at,
+      read_at
+    `)
+    .eq("user_id", user.id)
+    .order("created_at", {
+      ascending: false,
+    })
+    .limit(100)
+    .returns<NotificationRow[]>();
 
-export default function NotificationsPage() {
-  const supabase = createClient();
-
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function markAsRead(latestId: number, email: string) {
-    if (!email || !latestId) return;
-
-    await supabase.from("notification_reads").upsert(
-      {
-        user_email: email,
-        last_seen_notification_id: latestId,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_email",
-      }
+  if (error) {
+    console.error(
+      "Failed to load notifications:",
+      error,
     );
   }
 
-  async function loadNotifications() {
-    setLoading(true);
+  const notifications: CustomerNotification[] =
+    (data ?? []).map(
+      (
+        notification,
+      ): CustomerNotification => ({
+        id: notification.id,
 
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData.user;
+        type: notification.type,
 
-    const email = user?.email?.trim().toLowerCase() || "";
-    const phone = normalizeEgyptPhone(user?.user_metadata?.phone || "");
+        title:
+          notification.title,
 
-    const { data } = await supabase
-      .from("notifications")
-      .select("*")
-      .order("id", { ascending: false });
+        message:
+          notification.message,
 
-    const rows = (data || []) as NotificationItem[];
+        entityType:
+          notification.entity_type,
 
-    const visibleRows = rows.filter((item) => {
-      if (item.type !== "order") return true;
+        entityId:
+          notification.entity_id,
 
-      const itemEmail = item.customer_email?.trim().toLowerCase() || "";
-      const itemPhone = normalizeEgyptPhone(item.customer_phone || "");
+        actionUrl:
+          notification.action_url,
 
-      if (!email && !phone) return false;
+        isRead:
+          notification.is_read,
 
-      return (email && itemEmail === email) || (phone && itemPhone === phone);
-    });
+        createdAt:
+          notification.created_at,
 
-    setItems(visibleRows);
+        readAt:
+          notification.read_at,
+      }),
+    );
 
-    if (visibleRows.length > 0 && email) {
-      await markAsRead(visibleRows[0].id, email);
-    }
-
-    setLoading(false);
-  }
+  const unreadCount =
+    notifications.filter(
+      (notification) =>
+        !notification.isRead,
+    ).length;
 
   return (
-    <>
-      <Navbar />
+    <AppShell>
+      <section className="notifications-page">
+        <header className="notifications-heading">
+          <div>
+            <span>
+              مركز التنبيهات
+            </span>
 
-      <main className="container notifications-page">
-        <section className="glass-card neon-border notifications-hero">
-          <span className="badge">
-            <Bell size={14} />
-            الإشعارات
+            <h1>
+              الإشعارات
+            </h1>
+
+            <p>
+              تابعي تحديثات الطلبات
+              والمحفظة والكوبونات من مكان
+              واحد.
+            </p>
+          </div>
+
+          <span className="notifications-count">
+            {unreadCount > 0 ? (
+              <BellRing size={16} />
+            ) : (
+              <CheckCircle2
+                size={16}
+              />
+            )}
+
+            {unreadCount.toLocaleString(
+              "ar-EG",
+            )}{" "}
+            جديد
           </span>
+        </header>
 
-          <h1 className="neon-text">آخر التحديثات</h1>
-
-          <p>
-            تابعي أخبار المتجر، العروض الجديدة، وتحديثات الطلبات من مكان واحد.
-          </p>
-        </section>
-
-        {loading ? (
-          <div className="game-loading skeleton" />
-        ) : items.length === 0 ? (
-          <section className="glass-card orders-empty">
-            <h2>لا توجد إشعارات حاليًا</h2>
-            <p>عند وجود عروض أو تحديثات جديدة ستظهر هنا.</p>
-
-            <Link href="/products" className="btn">
-              تصفح الألعاب
-            </Link>
-          </section>
-        ) : (
-          <section className="notifications-list">
-            {items.map((item) => {
-              const Icon = iconByType(item.type);
-
-              return (
-                <article key={item.id} className="glass-card notification-card">
-                  <div className="notification-icon">
-                    <Icon size={24} />
-                  </div>
-
-                  <div className="notification-content">
-                    <div className="notification-meta">
-                      <span>{typeLabel(item.type)}</span>
-
-                      <small>
-                        <Clock size={13} />
-                        {item.created_at
-                          ? new Date(item.created_at).toLocaleString("ar-EG")
-                          : "-"}
-                      </small>
-                    </div>
-
-                    <h2>{item.title}</h2>
-                    <p>{item.message}</p>
-
-                    {item.order_id && (
-                      <Link href="/orders" className="notification-link">
-                        متابعة الطلب #{item.order_id}
-                      </Link>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
-          </section>
-        )}
-
-        <div className="bottom-space" />
-      </main>
-
-      <BottomNav />
-    </>
+        <NotificationsList
+          notifications={
+            notifications
+          }
+        />
+      </section>
+    </AppShell>
   );
 }
