@@ -16,6 +16,7 @@ import {
   ShoppingCart,
   TicketPercent,
   WalletCards,
+  Headphones,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -155,6 +156,11 @@ export function Header() {
   }, []);
 
   const menuItems = [
+    {
+      title: "خدمة العملاء",
+      href: "/support",
+      icon: Headphones,
+    },
     {
       title: "حسابي",
       href: "/account",

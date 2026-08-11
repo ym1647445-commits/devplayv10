@@ -4,6 +4,9 @@ import {
   CircleDollarSign,
   Clock3,
   Plus,
+  Send,
+  QrCode,
+  ScanLine,
   RefreshCw,
   ShieldCheck,
   WalletCards,
@@ -201,6 +204,21 @@ export default async function WalletPage() {
             <Link href="/wallet/transactions">
               <Clock3 size={18} />
               سجل العمليات
+            </Link>
+
+            <Link href="/wallet/transfer">
+              <Send size={18} />
+              إرسال رصيد
+            </Link>
+
+            <Link href="/wallet/receive">
+              <QrCode size={18} />
+              استلام برابط أو QR
+            </Link>
+
+            <Link href="/wallet/scan">
+              <ScanLine size={18} />
+              مسح أو رفع QR
             </Link>
           </div>
         </section>

@@ -1,0 +1,1 @@
+export { WalletTransferForm } from "./WalletTransferForm";

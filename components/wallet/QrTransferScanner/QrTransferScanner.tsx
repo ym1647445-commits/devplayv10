@@ -1,0 +1,11 @@
+"use client";
+import { Camera,ImageUp,LoaderCircle,ScanLine } from "lucide-react";
+import QrScanner from "qr-scanner";
+import { useEffect,useRef,useState,type ChangeEvent } from "react";
+import styles from "./QrTransferScanner.module.css";
+export function QrTransferScanner(){const videoRef=useRef<HTMLVideoElement|null>(null),scannerRef=useRef<QrScanner|null>(null);const[active,setActive]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState("");
+ function openResult(data:string){try{const url=new URL(data,window.location.origin);if(url.origin!==window.location.origin||url.pathname!=="/wallet/transfer"||!/^DP-\d{6,}$/i.test(url.searchParams.get("to")??""))throw new Error();window.location.assign(url.pathname+url.search)}catch{setError("هذا QR ليس رابط تحويل DevPlay صالحًا.")}}
+ async function start(){setError("");setActive(true);await new Promise(r=>setTimeout(r,0));if(!videoRef.current)return;const scanner=new QrScanner(videoRef.current,r=>{scanner.stop();openResult(r.data)},{highlightScanRegion:true,highlightCodeOutline:true,preferredCamera:"environment"});scannerRef.current=scanner;try{await scanner.start()}catch{setError("تعذر فتح الكاميرا. اسمحي بإذن الكاميرا أو ارفعي صورة QR.");setActive(false)}}
+ async function upload(e:ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setLoading(true);setError("");try{const r=await QrScanner.scanImage(file,{returnDetailedScanResult:true});openResult(r.data)}catch{setError("لم نتمكن من قراءة QR من الصورة.")}finally{setLoading(false);e.target.value=""}}
+ useEffect(()=>()=>scannerRef.current?.destroy(),[]);
+ return <section className={styles.card}><div className={styles.heading}><span><ScanLine size={23}/></span><div><h2>مسح QR للتحويل</h2><p>استخدمي الكاميرا أو ارفعي صورة QR أرسلها لك المستلم.</p></div></div>{active&&<video ref={videoRef} className={styles.video}/>}<div className={styles.actions}><button type="button" onClick={start}><Camera size={18}/>فتح الكاميرا</button><label>{loading?<LoaderCircle className={styles.spin} size={18}/>:<ImageUp size={18}/>}رفع صورة QR<input type="file" accept="image/*" onChange={upload}/></label></div>{error&&<p className={styles.error}>{error}</p>}<small>لأمان حسابك، القارئ يقبل روابط DevPlay للتحويل فقط ويرفض أي رابط خارجي.</small></section>}

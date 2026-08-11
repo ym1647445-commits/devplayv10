@@ -8,6 +8,7 @@ import {
   Settings,
   ShieldCheck,
   TicketPercent,
+  Headphones,
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
@@ -177,6 +178,12 @@ export default async function AccountPage() {
     wallet?.is_frozen ?? false;
 
   const menuItems = [
+    {
+      title: "خدمة العملاء",
+      description: "أرسل مشكلة أو اقتراحًا وتابع رد الإدارة",
+      href: "/support",
+      icon: Headphones,
+    },
     {
       title: "طلباتي",
       description:

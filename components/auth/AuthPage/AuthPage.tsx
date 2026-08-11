@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
+import { loginWithPassword } from "@/app/auth/actions";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -196,29 +197,15 @@ export function AuthPage() {
     setLoading(true);
 
     try {
-      const { data, error } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        });
+      const result = await loginWithPassword(
+        email,
+        password,
+      );
 
-      if (error) {
+      if (!result.success) {
         setMessage({
           type: "error",
-          text:
-            error.message ===
-            "Invalid login credentials"
-              ? "البريد أو كلمة المرور غير صحيحة."
-              : error.message,
-        });
-
-        return;
-      }
-
-      if (!data.user) {
-        setMessage({
-          type: "error",
-          text: "تعذر تسجيل الدخول.",
+          text: result.message,
         });
 
         return;

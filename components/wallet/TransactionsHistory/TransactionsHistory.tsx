@@ -68,7 +68,10 @@ function formatDate(
 
 function getTransactionLabel(
   type: WalletTransactionType,
+  referenceType?: string | null,
 ): string {
+  if (referenceType === "wallet_transfer_sent") return "إرسال رصيد";
+  if (referenceType === "wallet_transfer_received") return "استلام رصيد";
   const labels: Record<
     WalletTransactionType,
     string
@@ -87,7 +90,10 @@ function getTransactionLabel(
 
 function isCreditTransaction(
   type: WalletTransactionType,
+  referenceType?: string | null,
 ): boolean {
+  if (referenceType === "wallet_transfer_received") return true;
+  if (referenceType === "wallet_transfer_sent") return false;
   return [
     "deposit",
     "refund",
@@ -98,7 +104,10 @@ function isCreditTransaction(
 
 function getTransactionIcon(
   type: WalletTransactionType,
+  referenceType?: string | null,
 ) {
+  if (referenceType === "wallet_transfer_received") return ArrowDownLeft;
+  if (referenceType === "wallet_transfer_sent") return ArrowUpRight;
   if (type === "deposit") {
     return ArrowDownLeft;
   }
@@ -156,6 +165,7 @@ export function TransactionsHistory({
             transaction.description,
             getTransactionLabel(
               transaction.type,
+              transaction.referenceType,
             ),
           ]
             .filter(Boolean)
@@ -275,11 +285,13 @@ export function TransactionsHistory({
               const Icon =
                 getTransactionIcon(
                   transaction.type,
+                  transaction.referenceType,
                 );
 
               const credit =
                 isCreditTransaction(
                   transaction.type,
+                  transaction.referenceType,
                 );
 
               return (
@@ -312,6 +324,7 @@ export function TransactionsHistory({
                       <strong>
                         {getTransactionLabel(
                           transaction.type,
+                          transaction.referenceType,
                         )}
                       </strong>
 
@@ -330,6 +343,10 @@ export function TransactionsHistory({
                         )}
                       </span>
                     </div>
+
+                    <a href={`/api/wallet/statement?transactionId=${transaction.id}`}>
+                      تنزيل إيصال PDF
+                    </a>
 
                     <span
                       className={

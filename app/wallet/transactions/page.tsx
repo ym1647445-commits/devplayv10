@@ -333,6 +333,10 @@ export default async function WalletTransactionsPage() {
           </Link>
         </header>
 
+        <a className="wallet-history-button" href="/api/wallet/statement">
+          تنزيل PDF لآخر 10 عمليات
+        </a>
+
         <section className="wallet-transactions-overview">
           <article>
             <WalletCards size={18} />

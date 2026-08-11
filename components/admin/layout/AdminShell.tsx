@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   TicketPercent,
   UsersRound,
+  Headphones,
   WalletCards,
   X,
 } from "lucide-react";
@@ -34,6 +35,12 @@ interface AdminShellProps {
 }
 
 const navigationItems = [
+  {
+    title: "خدمة العملاء",
+    description: "التذاكر والمشكلات والاقتراحات",
+    href: "/admin/support",
+    icon: Headphones,
+  },
   {
     title: "الرئيسية",
     description: "نظرة عامة على المنصة",

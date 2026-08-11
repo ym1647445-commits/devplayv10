@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { WhatsAppSupport } from "@/components/support/WhatsAppSupport";
+import { DevPlayAI } from "@/components/support/DevPlayAI";
 
 import { BottomNavigation } from "../BottomNavigation";
 import { Header } from "../Header";
@@ -22,7 +22,7 @@ export function AppShell({
         {children}
       </main>
 
-      <WhatsAppSupport />
+      <DevPlayAI />
 
       <BottomNavigation />
     </div>

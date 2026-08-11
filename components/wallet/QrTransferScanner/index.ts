@@ -1,0 +1,1 @@
+export { QrTransferScanner } from "./QrTransferScanner";
