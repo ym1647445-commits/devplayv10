@@ -423,6 +423,110 @@ export async function updateProductOffer(
   }
 }
 
+export async function updateProductOffersRequiredFields(input: {
+  productId: string;
+  requiredFields: ProductRequiredField[];
+  targetAccountFieldId: string | null;
+  mode: "all" | "empty";
+}): Promise<ProductOfferActionResult & { updatedCount?: number }> {
+  try {
+    if (!input.productId.trim()) {
+      return { success: false, message: "معرّف المنتج غير صحيح." };
+    }
+
+    const fieldsError = validateRequiredFields(input.requiredFields);
+    if (fieldsError) return { success: false, message: fieldsError };
+
+    const normalizedFields = normalizeRequiredFields(input.requiredFields);
+    const targetField = input.targetAccountFieldId?.trim() || null;
+    if (targetField && !normalizedFields.some((field) => field.id === targetField)) {
+      return { success: false, message: "حقل الإرسال للمورد يجب أن يكون واحدًا من الحقول المطلوبة." };
+    }
+
+    const { supabase, adminId } = await requireAdmin();
+    const { data: product, error: productError } = await supabase
+      .from("store_products")
+      .select("id, name_ar, provider_data")
+      .eq("id", input.productId)
+      .single<{ id: string; name_ar: string; provider_data: Record<string, unknown> | null }>();
+    if (productError || !product) throw productError ?? new Error("المنتج غير موجود.");
+
+    const { data: offers, error: offersError } = await supabase
+      .from("store_product_offers")
+      .select("id, required_fields, provider_data")
+      .eq("product_id", input.productId)
+      .returns<Array<{
+        id: string;
+        required_fields: ProductRequiredField[] | null;
+        provider_data: Record<string, unknown> | null;
+      }>>();
+    if (offersError) throw offersError;
+
+    const selectedOffers = (offers ?? []).filter(
+      (offer) => input.mode === "all" || !(offer.required_fields?.length),
+    );
+    const now = new Date().toISOString();
+
+    const { error: productUpdateError } = await supabase
+      .from("store_products")
+      .update({
+        required_fields: normalizedFields,
+        provider_data: {
+          ...(product.provider_data ?? {}),
+          ...(targetField ? { target_account_field: targetField } : {}),
+        },
+        updated_at: now,
+      })
+      .eq("id", product.id);
+    if (productUpdateError) throw productUpdateError;
+
+    for (const offer of selectedOffers) {
+      const { error: offerUpdateError } = await supabase
+        .from("store_product_offers")
+        .update({
+          required_fields: normalizedFields,
+          provider_data: {
+            ...(offer.provider_data ?? {}),
+            ...(targetField ? { target_account_field: targetField } : {}),
+          },
+          updated_at: now,
+        })
+        .eq("id", offer.id)
+        .eq("product_id", product.id);
+      if (offerUpdateError) throw offerUpdateError;
+    }
+
+    await supabase.from("activity_logs").insert({
+      actor_id: adminId,
+      action: "store_product_offers_required_fields_bulk_updated",
+      entity_type: "store_product",
+      entity_id: product.id,
+      description: `Admin applied required fields to ${selectedOffers.length} offers in ${product.name_ar}`,
+      new_data: {
+        mode: input.mode,
+        target_account_field: targetField,
+        required_fields: normalizedFields,
+        updated_offers_count: selectedOffers.length,
+      },
+    });
+
+    for (const path of [`/admin/products/${product.id}`, "/admin/products", "/products", "/"]) {
+      revalidatePath(path);
+    }
+
+    return {
+      success: true,
+      updatedCount: selectedOffers.length,
+      message: `تم تطبيق البيانات المطلوبة على ${selectedOffers.length.toLocaleString("ar-EG")} باقة بنجاح.`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "تعذر تطبيق البيانات المطلوبة على الباقات.",
+    };
+  }
+}
+
 export async function deleteProductOffer({productId,offerId}:{productId:string;offerId:string}):Promise<ProductOfferActionResult>{
   try{const{supabase,adminId}=await requireAdmin();const{data:offer,error}=await supabase.from("store_product_offers").select("id,name_ar,provider_offer_row_id").eq("id",offerId).eq("product_id",productId).single<{id:string;name_ar:string;provider_offer_row_id:string|null}>();if(error||!offer)throw error??new Error("الباقة غير موجودة.");
     const{count,error:countError}=await supabase.from("product_order_items").select("id",{head:true,count:"exact"}).eq("offer_id",offerId);if(countError)throw countError;

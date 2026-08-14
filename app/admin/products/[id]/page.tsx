@@ -17,6 +17,8 @@ import {
   ProductOfferEditor,
 } from "@/components/admin/products/ProductOfferEditor";
 
+import { BulkRequiredFieldsEditor } from "@/components/admin/products/BulkRequiredFieldsEditor";
+
 import {
   ProductDetailsEditor,
 } from "@/components/admin/products/ProductDetailsEditor";
@@ -110,6 +112,10 @@ interface ProductRow {
     | string
     | null;
 
+  required_fields:
+    | ProductRequiredField[]
+    | null;
+
   provider_data:
     | Record<
         string,
@@ -197,6 +203,7 @@ export default async function AdminProductDetailsPage({
       instant_delivery,
       delivery_time,
       badge,
+      required_fields,
       provider_data,
 
       category:store_categories(
@@ -983,6 +990,17 @@ export default async function AdminProductDetailsPage({
             باقة
           </span>
         </header>
+
+        <BulkRequiredFieldsEditor
+          productId={product.id}
+          initialFields={product.required_fields ?? []}
+          initialTargetField={
+            typeof product.provider_data?.target_account_field === "string"
+              ? product.provider_data.target_account_field
+              : null
+          }
+          offersCount={offers.length}
+        />
 
         {offers.length ===
         0 ? (

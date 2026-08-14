@@ -8,6 +8,19 @@ import {
   createClient,
 } from "@/lib/supabase/server";
 
+import type { ProductRequiredField } from "@/types/product";
+
+const DEFAULT_TOPUP_REQUIRED_FIELDS: ProductRequiredField[] = [
+  {
+    id: "target_account",
+    label: "معرف اللاعب / Player ID",
+    placeholder: "اكتب Player ID أو معرف الحساب بدقة",
+    type: "text",
+    required: true,
+    helperText: "راجع المعرف قبل تأكيد الطلب؛ سيتم إرساله للمورد كما هو.",
+  },
+];
+
 interface ImportOfferResult {
   success: boolean;
   message: string;
@@ -682,7 +695,9 @@ export async function importProviderOfferToStore(
              * Override عليها بعدين.
              */
             required_fields:
-              [],
+              offer.catalog_type === "topup"
+                ? DEFAULT_TOPUP_REQUIRED_FIELDS
+                : [],
 
             status:
               "available",
@@ -714,6 +729,10 @@ export async function importProviderOfferToStore(
 
               product_type:
                 "provider_group",
+
+              ...(offer.catalog_type === "topup"
+                ? { target_account_field: "target_account" }
+                : {}),
             },
           })
           .select("id")
@@ -743,6 +762,43 @@ export async function importProviderOfferToStore(
      * 4. حساب الربح الافتراضي للباقة
      * ==========================================
      */
+
+    if (offer.catalog_type === "topup") {
+      const { data: defaults, error: defaultsReadError } = await supabase
+        .from("store_products")
+        .select("required_fields, provider_data")
+        .eq("id", mainProductId)
+        .single<{
+          required_fields: ProductRequiredField[] | null;
+          provider_data: Record<string, unknown> | null;
+        }>();
+
+      if (defaultsReadError) {
+        return { success: false, message: defaultsReadError.message };
+      }
+
+      const providerData = defaults?.provider_data ?? {};
+      const { error: defaultsUpdateError } = await supabase
+        .from("store_products")
+        .update({
+          ...(defaults?.required_fields?.length
+            ? {}
+            : { required_fields: DEFAULT_TOPUP_REQUIRED_FIELDS }),
+          provider_data: {
+            ...providerData,
+            target_account_field:
+              typeof providerData.target_account_field === "string"
+                ? providerData.target_account_field
+                : "target_account",
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", mainProductId);
+
+      if (defaultsUpdateError) {
+        return { success: false, message: defaultsUpdateError.message };
+      }
+    }
 
     const profitUsd =
       await getDefaultProfitUsd(
@@ -784,7 +840,8 @@ export async function importProviderOfferToStore(
       )
       .select(`
         id,
-        product_id
+        product_id,
+        required_fields
       `)
       .eq(
         "provider_offer_row_id",
@@ -793,6 +850,7 @@ export async function importProviderOfferToStore(
       .maybeSingle<{
         id: string;
         product_id: string;
+        required_fields: ProductRequiredField[] | null;
       }>();
 
     if (
@@ -852,7 +910,9 @@ export async function importProviderOfferToStore(
        * لا نضعها من API حاليًا.
        */
       required_fields:
-        [],
+        offer.catalog_type === "topup"
+          ? DEFAULT_TOPUP_REQUIRED_FIELDS
+          : [],
 
       instructions_ar:
         null,
@@ -878,6 +938,10 @@ export async function importProviderOfferToStore(
 
         raw_data:
           offer.raw_data,
+
+        ...(offer.catalog_type === "topup"
+          ? { target_account_field: "target_account" }
+          : {}),
       },
 
       updated_at:
@@ -933,6 +997,11 @@ export async function importProviderOfferToStore(
 
           provider_data:
             offerPayload.provider_data,
+
+          ...(offer.catalog_type === "topup" &&
+          !(existingProductOffer.required_fields?.length)
+            ? { required_fields: DEFAULT_TOPUP_REQUIRED_FIELDS }
+            : {}),
 
           updated_at:
             new Date().toISOString(),
