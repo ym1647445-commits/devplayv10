@@ -50,6 +50,10 @@ interface StoreOfferRow {
     | ProductRequiredField[]
     | null;
 
+  provider_data:
+    | Record<string, unknown>
+    | null;
+
   instructions_ar:
     | string
     | null;
@@ -187,6 +191,7 @@ export default async function ProductPage({
           available,
           active,
           required_fields,
+          provider_data,
           instructions_ar,
           customer_note_ar,
           sort_order
@@ -381,6 +386,12 @@ export default async function ProductPage({
                 requiredFields:
                   offer.required_fields ??
                   [],
+
+                catalogType:
+                  offer.provider_data?.catalog_type === "topup" ||
+                  offer.provider_data?.catalog_type === "gc"
+                    ? offer.provider_data.catalog_type
+                    : null,
 
                 instructionsAr:
                   offer.instructions_ar,

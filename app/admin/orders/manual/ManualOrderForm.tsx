@@ -20,7 +20,11 @@ export function ManualOrderForm({customers,products,rate,defaultCustomer,canComp
   const [result,setResult]=useState<{success:boolean;message:string;orderId?:string}|null>(null); const [pending,start]=useTransition();
   const customer=customers.find(c=>c.id===customerId); const product=products.find(p=>p.id===productId);
   const offers=product?.store_product_offers??[]; const offer=offers.find(o=>o.id===offerId);
-  const fields=offer?.required_fields?.length?offer.required_fields:(product?.required_fields??[]);
+  const fields=offer?.provider_data?.catalog_type==="gc"
+    ? []
+    : offer?.required_fields?.length
+      ? offer.required_fields
+      : (product?.required_fields??[]);
   const total=offer?(Number(offer.supplier_price_usd)+Number(offer.profit_usd))*quantity:0;
   const wallet=customer?.account_wallets?.[0];
   function selectProduct(id:string){setProductId(id);setOfferId("");setInputs({});setResult(null)}

@@ -38,6 +38,13 @@ export interface CustomerOrderHistoryItem {
   rejectionReason: string | null;
   adminNote: string | null;
   deliveredCodes?: string[];
+  codeRedemption?: {
+    steps: string[];
+    url: string | null;
+    assistedEnabled: boolean;
+    accountLabel: string;
+    accountPlaceholder: string;
+  };
 
   createdAt: string;
   updatedAt: string;

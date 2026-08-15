@@ -18,6 +18,8 @@ import {
   useState,
 } from "react";
 
+import { CodeRedemptionPanel } from "@/components/orders/CodeRedemptionPanel";
+
 import type {
   CustomerOrderHistoryItem,
   CustomerOrderStatus,
@@ -466,6 +468,10 @@ export function OrdersHistory({
                     {order.deliveredCodes&&order.deliveredCodes.length>0&&(
                       <div className={styles.deliveredCodes}><strong>أكواد التفعيل</strong><p>احتفظي بالكود في مكان آمن ولا تشاركيه مع أي شخص.</p>{order.deliveredCodes.map((code,index)=><div key={`${code}-${index}`}><code dir="ltr">{code}</code><button type="button" onClick={()=>void navigator.clipboard.writeText(code)} aria-label="نسخ الكود"><Copy size={14}/> نسخ</button></div>)}</div>
                     )}
+
+                    {order.deliveredCodes?.length && order.codeRedemption ? (
+                      <CodeRedemptionPanel orderId={order.id} config={order.codeRedemption} />
+                    ) : null}
 
                     {order.rejectionReason && (
                       <div

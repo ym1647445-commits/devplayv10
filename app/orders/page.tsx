@@ -46,6 +46,7 @@ interface DepositOrderRow {
 
 interface ProductOrderItemRow {
   id: string;
+  product_id: string;
   product_name: string;
   offer_name: string | null;
   provider_offer_id: string | null;
@@ -54,6 +55,20 @@ interface ProductOrderItemRow {
   total_price_usd: number | string;
   input_values: Record<string, string> | null;
   supplier_response: unknown;
+  offer:
+    | {
+        instructions_ar: string | null;
+        provider_data: Record<string, unknown> | null;
+      }
+    | {
+        instructions_ar: string | null;
+        provider_data: Record<string, unknown> | null;
+      }[]
+    | null;
+  product:
+    | { provider_data: Record<string, unknown> | null }
+    | { provider_data: Record<string, unknown> | null }[]
+    | null;
 }
 
 interface ProductOrderRow {
@@ -235,6 +250,7 @@ export default async function OrdersPage() {
         updated_at,
         product_order_items(
           id,
+          product_id,
           product_name,
           offer_name,
           provider_offer_id,
@@ -242,7 +258,14 @@ export default async function OrdersPage() {
           unit_price_usd,
           total_price_usd,
           input_values,
-          supplier_response
+          supplier_response,
+          offer:store_product_offers(
+            instructions_ar,
+            provider_data
+          ),
+          product:store_products(
+            provider_data
+          )
         )
       `)
       .eq("user_id", user.id)
@@ -363,6 +386,22 @@ export default async function OrdersPage() {
           order.usd_to_egp_rate,
         );
 
+        const redemptionItem = items.find((item) => {
+          if (!extractDeliveredCodes(item.supplier_response).length) return false;
+          const product = getRelation(item.product);
+          const data = product?.provider_data;
+          return Array.isArray(data?.redemption_steps) || typeof data?.redemption_url === "string" || data?.redemption_assisted_enabled === true || data?.redemption_mode === "assisted";
+        });
+        const redemptionProduct = redemptionItem ? getRelation(redemptionItem.product) : null;
+        const redemptionData = redemptionProduct?.provider_data ?? null;
+        const redemptionSteps = Array.isArray(redemptionData?.redemption_steps)
+          ? redemptionData.redemption_steps.filter((step): step is string => typeof step === "string" && Boolean(step.trim()))
+          : typeof redemptionData?.redemption_instructions_ar === "string"
+            ? redemptionData.redemption_instructions_ar.split("\n").filter(Boolean)
+            : [];
+        const redemptionUrl = typeof redemptionData?.redemption_url === "string" ? redemptionData.redemption_url : null;
+        const assistedEnabled = redemptionData?.redemption_assisted_enabled === true || redemptionData?.redemption_mode === "assisted";
+
         return {
           id: order.id,
 
@@ -399,6 +438,17 @@ export default async function OrdersPage() {
             order.admin_note,
 
           deliveredCodes: Array.from(new Set(items.flatMap(item=>extractDeliveredCodes(item.supplier_response)))),
+
+          codeRedemption:
+            redemptionSteps.length || redemptionUrl || assistedEnabled
+              ? {
+                  steps: redemptionSteps,
+                  url: redemptionUrl,
+                  assistedEnabled,
+                  accountLabel: typeof redemptionData?.redemption_account_label === "string" ? redemptionData.redemption_account_label : "معرف الحساب / Player ID",
+                  accountPlaceholder: typeof redemptionData?.redemption_account_placeholder === "string" ? redemptionData.redemption_account_placeholder : "اكتب معرف الحساب بدقة",
+                }
+              : undefined,
 
           createdAt:
             order.created_at,

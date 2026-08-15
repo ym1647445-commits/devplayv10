@@ -1,4 +1,4 @@
-import { Bot, Headphones, MessageSquare, Search, UserRound } from "lucide-react";
+import { Bot, ExternalLink, Headphones, MessageSquare, Search, UserRound } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { replyTicket } from "./actions";
@@ -7,6 +7,7 @@ import styles from "./support.module.css";
 interface TicketMessage { id:string;message:string;sender_role:string;created_at:string }
 interface Ticket { id:string;ticket_id:string;user_id:string;category:string;subject:string;status:string;source?:string;ai_summary?:string|null;created_at:string;updated_at:string;customer_id:string;customer_name:string|null;unread_count:number;messages:TicketMessage[] }
 const statuses:Record<string,string>={open:"مفتوحة",in_progress:"قيد العمل",waiting_customer:"بانتظار العميل",resolved:"تم الحل",closed:"مغلقة"};
+function MessageBody({text}:{text:string}){const parts=text.split(/(https?:\/\/[^\s]+)/g);return <p>{parts.map((part,index)=>part.startsWith("http://")||part.startsWith("https://")?<a key={index} href={part} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,color:"var(--primary)",fontWeight:900}}><ExternalLink size={13}/> فتح موقع الاسترداد</a>:part)}</p>}
 
 export default async function AdminSupport({searchParams}:{searchParams:Promise<{ticket?:string;q?:string}>}) {
   const params=await searchParams;
@@ -36,7 +37,7 @@ export default async function AdminSupport({searchParams}:{searchParams:Promise<
         {!selected?<div className={styles.empty}><MessageSquare size={32}/><strong>لا توجد محادثات بعد</strong></div>:<>
           <header className={styles.chatHeader}><div className={styles.identity}><span className={styles.avatar}><UserRound size={18}/></span><div><h2>{selected.customer_name||"عميل DevPlay"}</h2><p>{selected.subject} · {selected.ticket_id}</p></div></div><Link href={`/admin/users/${encodeURIComponent(selected.customer_id)}`}>فتح عميل 360°</Link></header>
           {selected.source==="devplay_ai"&&<div className={styles.aiNote}><Bot size={17}/><div><strong>تم التصعيد بواسطة DevPlay AI</strong><p>{selected.ai_summary}</p></div></div>}
-          <div className={styles.messages}>{selected.messages.map(message=><article className={message.sender_role==="customer"?styles.customerMessage:message.sender_role==="devplay_ai"?styles.aiMessage:styles.adminMessage} key={message.id}><strong>{message.sender_role==="customer"?selected.customer_name||"العميل":message.sender_role==="devplay_ai"?"DevPlay AI":"فريق DevPlay"}</strong><p>{message.message}</p><time>{new Intl.DateTimeFormat("ar-EG",{dateStyle:"medium",timeStyle:"short"}).format(new Date(message.created_at))}</time></article>)}</div>
+          <div className={styles.messages}>{selected.messages.map(message=><article className={message.sender_role==="customer"?styles.customerMessage:message.sender_role==="devplay_ai"?styles.aiMessage:styles.adminMessage} key={message.id}><strong>{message.sender_role==="customer"?selected.customer_name||"العميل":message.sender_role==="devplay_ai"?"DevPlay AI":"فريق DevPlay"}</strong><MessageBody text={message.message}/><time>{new Intl.DateTimeFormat("ar-EG",{dateStyle:"medium",timeStyle:"short"}).format(new Date(message.created_at))}</time></article>)}</div>
           <form className={styles.composer} action={replyTicket}><input type="hidden" name="ticketId" value={selected.id}/><textarea name="message" minLength={2} maxLength={3000} required placeholder="اكتبي ردك للعميل..."/><div><select name="status" defaultValue="waiting_customer"><option value="in_progress">قيد العمل</option><option value="waiting_customer">بانتظار العميل</option><option value="resolved">تم الحل</option><option value="closed">مغلقة</option></select><button>إرسال الرد والإشعار</button></div></form>
         </>}
       </main>

@@ -18,6 +18,7 @@ import {
 } from "@/components/admin/products/ProductOfferEditor";
 
 import { BulkRequiredFieldsEditor } from "@/components/admin/products/BulkRequiredFieldsEditor";
+import { ProductRedemptionSettings } from "@/components/admin/products/ProductRedemptionSettings";
 
 import {
   ProductDetailsEditor,
@@ -62,6 +63,8 @@ interface ProductOfferRow {
   required_fields:
     | ProductRequiredField[]
     | null;
+
+  provider_data: Record<string, unknown> | null;
 
   instructions_ar:
     | string
@@ -224,6 +227,7 @@ export default async function AdminProductDetailsPage({
         available,
         active,
         required_fields,
+        provider_data,
         instructions_ar,
         customer_note_ar,
         sort_order
@@ -991,6 +995,21 @@ export default async function AdminProductDetailsPage({
           </span>
         </header>
 
+        <ProductRedemptionSettings
+          productId={product.id}
+          initial={{
+            steps: Array.isArray(product.provider_data?.redemption_steps)
+              ? product.provider_data.redemption_steps.filter((step): step is string => typeof step === "string")
+              : typeof product.provider_data?.redemption_instructions_ar === "string"
+                ? product.provider_data.redemption_instructions_ar.split("\n").filter(Boolean)
+                : [],
+            url: typeof product.provider_data?.redemption_url === "string" ? product.provider_data.redemption_url : "",
+            assistedEnabled: product.provider_data?.redemption_assisted_enabled === true || product.provider_data?.redemption_mode === "assisted",
+            accountLabel: typeof product.provider_data?.redemption_account_label === "string" ? product.provider_data.redemption_account_label : "",
+            accountPlaceholder: typeof product.provider_data?.redemption_account_placeholder === "string" ? product.provider_data.redemption_account_placeholder : "",
+          }}
+        />
+
         <BulkRequiredFieldsEditor
           productId={product.id}
           initialFields={product.required_fields ?? []}
@@ -1353,6 +1372,7 @@ export default async function AdminProductDetailsPage({
                         requiredFields:
                           offer.required_fields ??
                           [],
+
                       }}
                     />
                   </article>

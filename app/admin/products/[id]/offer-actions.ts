@@ -39,6 +39,7 @@ interface UpdateProductOfferInput {
 
   requiredFields:
     ProductRequiredField[];
+
 }
 
 interface ProductOfferActionResult {
@@ -534,4 +535,23 @@ export async function deleteProductOffer({productId,offerId}:{productId:string;o
     else{if(offer.provider_offer_row_id){const{error:unlinkError}=await supabase.from("provider_offers").update({imported_to_store:false,store_product_id:null}).eq("id",offer.provider_offer_row_id);if(unlinkError)throw unlinkError}const{error:deleteError}=await supabase.from("store_product_offers").delete().eq("id",offerId);if(deleteError)throw deleteError;await supabase.from("activity_logs").insert({actor_id:adminId,action:"store_product_offer_deleted",entity_type:"store_product",entity_id:productId,description:`Admin deleted offer ${offer.name_ar}`,new_data:{deleted_offer_id:offerId}})}
     revalidatePath(`/admin/products/${productId}`);revalidatePath("/admin/provider-offers");revalidatePath("/products");revalidatePath("/");return{success:true,message:(count??0)>0?"الباقة مرتبطة بطلبات قديمة، لذلك تم إخفاؤها نهائيًا عن العملاء.":"تم حذف الباقة وإلغاء ربطها من المورد."};
   }catch(error){return{success:false,message:error instanceof Error?error.message:"تعذر حذف الباقة."}}
+}
+
+export async function updateProductRedemptionSettings(input:{productId:string;steps:string[];redemptionUrl?:string|null;assistedEnabled:boolean;accountLabel?:string|null;accountPlaceholder?:string|null}):Promise<ProductOfferActionResult>{
+  try{
+    if(!input.productId.trim())return{success:false,message:"معرّف المنتج غير صحيح."};
+    const steps=input.steps.map(step=>step.trim()).filter(Boolean);
+    if(steps.length>10)return{success:false,message:"الحد الأقصى 10 خطوات."};
+    if(steps.some(step=>step.length>500))return{success:false,message:"إحدى الخطوات طويلة جدًا."};
+    const redemptionUrl=cleanText(input.redemptionUrl);
+    if(redemptionUrl){try{const parsed=new URL(redemptionUrl);if(!["https:","http:"].includes(parsed.protocol))throw new Error()}catch{return{success:false,message:"رابط الاسترداد غير صحيح."}}}
+    const{supabase,adminId}=await requireAdmin();
+    const{data:product,error:readError}=await supabase.from("store_products").select("id,name_ar,provider_data").eq("id",input.productId).single<{id:string;name_ar:string;provider_data:Record<string,unknown>|null}>();
+    if(readError||!product)return{success:false,message:readError?.message??"تعذر العثور على المنتج."};
+    const providerData={...(product.provider_data??{}),redemption_mode:null,redemption_steps:steps,redemption_url:redemptionUrl,redemption_assisted_enabled:Boolean(input.assistedEnabled),redemption_account_label:cleanText(input.accountLabel),redemption_account_placeholder:cleanText(input.accountPlaceholder)};
+    const{error}=await supabase.from("store_products").update({provider_data:providerData,updated_at:new Date().toISOString()}).eq("id",product.id);if(error)return{success:false,message:error.message};
+    await supabase.from("activity_logs").insert({actor_id:adminId,action:"store_product_redemption_settings_updated",entity_type:"store_product",entity_id:product.id,description:`Updated code redemption settings for ${product.name_ar}`,new_data:{steps_count:steps.length,redemption_url:redemptionUrl,assisted_enabled:Boolean(input.assistedEnabled)}});
+    revalidatePath(`/admin/products/${product.id}`);revalidatePath("/orders");
+    return{success:true,message:"تم حفظ نافذة الاسترداد لكل باقات المنتج."};
+  }catch(error){return{success:false,message:error instanceof Error?error.message:"تعذر حفظ إعدادات الاسترداد."}}
 }

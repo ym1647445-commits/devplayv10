@@ -88,6 +88,8 @@ begin
   end if;
 
   v_fields := case
+    when v_offer.provider_data ->> 'catalog_type' = 'gc'
+      then '[]'::jsonb
     when jsonb_typeof(v_offer.required_fields) = 'array' and jsonb_array_length(v_offer.required_fields) > 0
       then v_offer.required_fields
     else coalesce(v_product.required_fields, '[]'::jsonb)

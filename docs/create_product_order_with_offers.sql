@@ -216,6 +216,10 @@ begin
 
     v_effective_required_fields :=
       case
+        -- Gift-card offers deliver a code. An empty offer configuration is
+        -- intentional here and must not inherit Player ID from the parent.
+        when v_offer.provider_data ->> 'catalog_type' = 'gc'
+          then '[]'::jsonb
         when jsonb_typeof(v_offer.required_fields) = 'array'
              and jsonb_array_length(v_offer.required_fields) > 0
           then v_offer.required_fields

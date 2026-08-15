@@ -61,6 +61,11 @@ interface ProductOffer {
   requiredFields:
     ProductRequiredField[];
 
+  catalogType:
+    | "topup"
+    | "gc"
+    | null;
+
   instructionsAr:
     | string
     | null;
@@ -195,6 +200,12 @@ export function ProductDetails({
 
   const requiredFields =
     useMemo(() => {
+      // Gift cards deliver a code and never inherit Player ID from the
+      // parent product. Only direct top-up offers may use that fallback.
+      if (selectedOffer?.catalogType === "gc") {
+        return [];
+      }
+
       if (
         selectedOffer &&
         selectedOffer
