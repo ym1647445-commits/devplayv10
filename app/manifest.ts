@@ -17,23 +17,25 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["games", "shopping", "utilities"],
     icons: [
       {
-        src: "/devplay-icon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/devplay-app-icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
         purpose: "any",
       },
       {
-        src: "/devplay-icon-maskable.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/devplay-app-icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
         purpose: "maskable",
       },
+      { src: "/devplay-app-icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
     ],
     shortcuts: [
       { name: "المنتجات", short_name: "المنتجات", url: "/products" },
       { name: "السلة", short_name: "السلة", url: "/cart" },
       { name: "طلباتي", short_name: "طلباتي", url: "/orders" },
       { name: "المحفظة", short_name: "المحفظة", url: "/wallet" },
+      { name: "تثبيت التطبيق", short_name: "تثبيت", url: "/download" },
     ],
   };
 }

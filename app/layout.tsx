@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { VisualAssistant } from "@/components/assistant/VisualAssistant";
+
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { PWAClient } from "@/components/pwa/PWAClient";
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
   applicationName: "DevPlay Top Up",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "DevPlay", statusBarStyle: "black-translucent" },
-  icons: { icon: "/devplay-icon.svg", apple: "/devplay-icon.svg" },
+  icons: { icon: "/devplay-app-icon-192.png", apple: "/devplay-app-icon-512.png" },
 };
 
 export default function RootLayout({
@@ -36,6 +38,7 @@ export default function RootLayout({
   <ThemeProvider>
     <AuthProvider>
       {children}
+      <VisualAssistant />
       <PWAClient />
     </AuthProvider>
   </ThemeProvider>

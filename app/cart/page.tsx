@@ -11,13 +11,14 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { calculateRewardPoints } from "@/lib/rewardPoints";
 
 import { CartItem } from "@/components/cart/CartItem";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { validateCartCoupon } from "@/app/cart/actions";
+import { showVisualAssistant } from "@/components/assistant/visualAssistantEvents";
 import { formatUsd } from "@/lib/productPricing";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   getCartItemsCount,
   getCartSubtotal,
@@ -27,6 +28,7 @@ import {
 
 export default function CartPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   const [couponCode, setCouponCode] =
     useState("");
@@ -114,8 +116,6 @@ export default function CartPage() {
     0,
     subtotal - discount,
   );
-  const expectedPoints =
-  calculateRewardPoints(total);
 
   const incompleteItems =
     items.filter(
@@ -199,6 +199,23 @@ export default function CartPage() {
     clearCartNotice();
 
     if (checkoutDisabled) {
+      showVisualAssistant({
+        mood: "confused",
+        text: `لسه عندنا ${incompleteItems.length.toLocaleString("ar-EG")} منتج محتاج بيانات التنفيذ. كمّلي الحقول المعلّمة الأول.`,
+        duration: 9000,
+        priority: 3,
+      });
+      return;
+    }
+
+    if (!authLoading && !user) {
+      showVisualAssistant({
+        mood: "point",
+        text: "سجّلي الدخول الأول عشان نحفظ السلة ونربط الطلب بحسابك.",
+        action: { label: "تسجيل الدخول", href: "/auth?next=/checkout" },
+        duration: 10000,
+        priority: 4,
+      });
       return;
     }
 
@@ -421,27 +438,7 @@ export default function CartPage() {
               <div>
                 <span>
                   عدد المنتجات
-                </span>
-                <div className="cart-points-preview">
-  <span>
-    النقاط المتوقعة
-  </span>
-
-  <strong>
-    +{" "}
-    {expectedPoints.toLocaleString(
-      "ar-EG",
-    )}{" "}
-    نقطة
-  </strong>
-</div>
-
-<p className="cart-points-note">
-  تُضاف النقاط إلى حسابك بعد اكتمال
-  تنفيذ الطلب بنجاح.
-</p>
-
-                <strong>
+                </span><strong>
                   {itemsCount}
                 </strong>
               </div>
@@ -487,7 +484,7 @@ export default function CartPage() {
                 fullWidth
                 size="large"
                 disabled={
-                  checkoutDisabled
+                  authLoading
                 }
                 onClick={
                   handleCheckout

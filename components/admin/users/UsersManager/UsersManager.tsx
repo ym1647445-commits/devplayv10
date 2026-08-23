@@ -613,12 +613,6 @@ export function UsersManager({
       ),
       icon: WalletCards,
     },
-    {
-      title: "نقاط العملاء",
-      value:
-        stats.totalCustomerPoints,
-      icon: Coins,
-    },
   ];
 
   return (
@@ -801,14 +795,6 @@ export function UsersManager({
                   {getLevelLabel(
                     user.customerLevel,
                   )}
-                </span>
-
-                <span>
-                  <Coins size={14} />
-                  {user.points.toLocaleString(
-                    "ar-EG",
-                  )}{" "}
-                  نقطة
                 </span>
 
                 <span>
@@ -1215,149 +1201,7 @@ export function UsersManager({
                     لا توجد محفظة لهذا العميل.
                   </p>
                 )}
-              </section>
-
-              <section className={styles.panel}>
-                <header>
-                  <Coins size={17} />
-                  <strong>
-                    النقاط والمستوى
-                  </strong>
-                </header>
-
-                <div
-                  className={
-                    styles.pointsSummary
-                  }
-                >
-                  <div>
-                    <span>
-                      رصيد النقاط
-                    </span>
-
-                    <strong>
-                      {selectedUser.points.toLocaleString(
-                        "ar-EG",
-                      )}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>
-                      نقاط مستحقة
-                    </span>
-
-                    <strong>
-                      {selectedUser.pointsDebt.toLocaleString(
-                        "ar-EG",
-                      )}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>
-                      المستوى
-                    </span>
-
-                    <strong>
-                      {getLevelLabel(
-                        selectedUser.customerLevel,
-                      )}
-                    </strong>
-                  </div>
-                </div>
-
-                <div
-                  className={
-                    styles.directionButtons
-                  }
-                >
-                  <button
-                    type="button"
-                    className={
-                      pointsDirection ===
-                      "credit"
-                        ? styles.activeDirection
-                        : ""
-                    }
-                    onClick={() =>
-                      setPointsDirection(
-                        "credit",
-                      )
-                    }
-                  >
-                    إضافة نقاط
-                  </button>
-
-                  <button
-                    type="button"
-                    className={
-                      pointsDirection ===
-                      "debit"
-                        ? styles.activeDirection
-                        : ""
-                    }
-                    onClick={() =>
-                      setPointsDirection(
-                        "debit",
-                      )
-                    }
-                  >
-                    خصم نقاط
-                  </button>
-                </div>
-
-                <label>
-                  <span>
-                    عدد النقاط
-                  </span>
-
-                  <input
-                    type="number"
-                    min="1"
-                    value={pointsAmount}
-                    onChange={(event) =>
-                      setPointsAmount(
-                        event.target.value,
-                      )
-                    }
-                  />
-                </label>
-
-                <label>
-                  <span>السبب</span>
-
-                  <textarea
-                    value={pointsReason}
-                    onChange={(event) =>
-                      setPointsReason(
-                        event.target.value,
-                      )
-                    }
-                    placeholder="مثال: هدية عيد ميلاد"
-                  />
-                </label>
-
-                <button
-                  className={
-                    styles.pointsButton
-                  }
-                  type="button"
-                  disabled={pending}
-                  onClick={
-                    handlePointsAdjustment
-                  }
-                >
-                  <Coins size={16} />
-
-                  {pointsDirection ===
-                  "credit"
-                    ? "إضافة النقاط"
-                    : "خصم النقاط"}
-                </button>
-              </section>
-
-              <section className={styles.panel}>
+              </section><section className={styles.panel}>
                 <header>
                   <ShieldAlert size={17} />
                   <strong>

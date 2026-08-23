@@ -206,13 +206,6 @@ export default async function AccountPage() {
       icon: TicketPercent,
     },
     {
-      title: "النقاط والمكافآت",
-      description:
-        "النقاط والمستوى وعجلة الحظ",
-      href: "/rewards",
-      icon: Gift,
-    },
-    {
       title: "الإشعارات",
       description:
         "آخر التحديثات والتنبيهات",
@@ -325,13 +318,6 @@ export default async function AccountPage() {
         </section>
 
         <section className="account-statistics">
-          <article>
-            <strong>
-              {profile.points}
-            </strong>
-
-            <span>النقاط</span>
-          </article>
 
           <article>
             <strong>

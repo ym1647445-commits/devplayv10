@@ -12,9 +12,12 @@ import {
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { calculateRewardPoints } from "@/lib/rewardPoints";
+import { useEffect, useState } from "react";
 import { createCheckoutOrder } from "@/app/checkout/actions";
+import {
+  showVisualAssistant,
+  trackAssistantRequest,
+} from "@/components/assistant/visualAssistantEvents";
 import { Button } from "@/components/ui/Button";
 import {
   formatUsd,
@@ -92,10 +95,6 @@ export function CheckoutClient() {
     0,
     subtotal - localDiscount,
   );
-  const expectedPoints =
-  calculateRewardPoints(
-    estimatedTotal,
-  );
 
   const balanceUsd = Number(
     wallet?.balance_usd ?? 0,
@@ -117,6 +116,42 @@ export function CheckoutClient() {
   const estimatedBalanceAfter =
     balanceUsd - estimatedTotal;
 
+  useEffect(() => {
+    if (!hydrated || authLoading || items.length === 0) return;
+
+    if (!user) {
+      showVisualAssistant({
+        mood: "point",
+        text: "لازم تسجّلي الدخول قبل إنشاء الطلب عشان نربطه بحسابك.",
+        action: { label: "تسجيل الدخول", href: "/auth?next=/checkout" },
+        duration: 10000,
+        priority: 5,
+      });
+      return;
+    }
+
+    if (hasIncompleteItems) {
+      showVisualAssistant({
+        mood: "confused",
+        text: "في بيانات تنفيذ ناقصة. ارجعي للسلة وكمّليها قبل تأكيد الطلب.",
+        action: { label: "إكمال البيانات", href: "/cart" },
+        duration: 10000,
+        priority: 4,
+      });
+      return;
+    }
+
+    if (balanceUsd < estimatedTotal) {
+      showVisualAssistant({
+        mood: "sympathy",
+        text: `الرصيد ناقص ${formatUsd(estimatedTotal - balanceUsd)}. أضيفي رصيد وبعدها ارجعي كمّلي الطلب.`,
+        action: { label: "إضافة رصيد", href: "/wallet/deposit" },
+        duration: 11000,
+        priority: 5,
+      });
+    }
+  }, [authLoading, balanceUsd, estimatedTotal, hasIncompleteItems, hydrated, items.length, user]);
+
   async function handleConfirmOrder(): Promise<void> {
     setMessage(null);
 
@@ -124,6 +159,13 @@ export function CheckoutClient() {
       setMessage(
         "يجب تسجيل الدخول أولًا.",
       );
+      showVisualAssistant({
+        mood: "point",
+        text: "لازم تسجّلي الدخول قبل إنشاء الطلب عشان نربطه بحسابك.",
+        action: { label: "تسجيل الدخول", href: "/auth?next=/checkout" },
+        duration: 10000,
+        priority: 5,
+      });
 
       return;
     }
@@ -210,10 +252,31 @@ export function CheckoutClient() {
       setSuccessOrder(
         result.order,
       );
+      trackAssistantRequest({
+        type: "order",
+        id: result.order.id,
+        displayId: result.order.orderId,
+        status: result.order.status,
+      });
+      showVisualAssistant({
+        mood: "celebrate",
+        text: `تم إنشاء الطلب ${result.order.orderId} بنجاح! يلا خلّينا نتابع طلبنا 🎉`,
+        action: { label: "متابعة طلبنا", href: "/orders" },
+        duration: 12000,
+        priority: 6,
+      });
 
       clearCart();
 
       await refreshAuth();
+    } else {
+      showVisualAssistant({
+        mood: "fall",
+        text: result.message || "تعذر إنشاء الطلب. راجعي البيانات وحاولي مرة أخرى.",
+        action: { label: "مراجعة السلة", href: "/cart" },
+        duration: 11000,
+        priority: 5,
+      });
     }
   }
 
@@ -703,23 +766,6 @@ export function CheckoutClient() {
                 )}
               </strong>
             </div>
-            <div
-  className={
-    styles.pointsRow
-  }
->
-  <span>
-    النقاط بعد اكتمال الطلب
-  </span>
-
-  <strong>
-    +{" "}
-    {expectedPoints.toLocaleString(
-      "ar-EG",
-    )}{" "}
-    نقطة
-  </strong>
-</div>
 
             <div>
               <span>
@@ -800,14 +846,6 @@ export function CheckoutClient() {
               "تأكيد وخصم الرصيد"
             )}
           </Button>
-          <p
-  className={
-    styles.pointsNotice
-  }
->
-  النقاط لا تُضاف وقت إنشاء الطلب،
-  بل بعد اكتمال التنفيذ بنجاح.
-</p>
 
           <p
             className={

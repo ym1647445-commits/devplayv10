@@ -1,5 +1,5 @@
-const CACHE_NAME = "devplay-shell-v1";
-const PUBLIC_SHELL = ["/", "/products", "/manifest.webmanifest", "/devplay-icon.svg", "/devplay-icon-maskable.svg"];
+const CACHE_NAME = "devplay-shell-v2";
+const PUBLIC_SHELL = ["/", "/products", "/download", "/manifest.webmanifest", "/devplay-app-icon-192.png", "/devplay-app-icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PUBLIC_SHELL)).then(() => self.skipWaiting()));

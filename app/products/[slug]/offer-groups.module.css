@@ -1,0 +1,2 @@
+.tabs{display:flex;gap:6px;max-width:100%;overflow-x:auto;padding:7px 0 2px;scroll-snap-type:x proximity;scrollbar-width:thin}.tabs button{flex:0 0 auto;scroll-snap-align:start;padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-full);background:var(--surface-soft);color:var(--muted);font:inherit;font-size:9px;font-weight:900;cursor:pointer}.tabs .active{border-color:var(--primary-border);background:var(--primary-soft);color:var(--primary)}
+

@@ -11,9 +11,14 @@ import {
   Phone,
   UserRound,
 } from "lucide-react";
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { loginWithPassword } from "@/app/auth/actions";
+import {
+  queueVisualAssistant,
+  showVisualAssistant,
+} from "@/components/assistant/visualAssistantEvents";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -115,6 +120,12 @@ export function AuthPage() {
         type: "error",
         text: validationError,
       });
+      showVisualAssistant({
+        mood: "confused",
+        text: validationError,
+        duration: 8000,
+        priority: 3,
+      });
 
       return;
     }
@@ -167,6 +178,12 @@ export function AuthPage() {
         text:
           "تم إنشاء الحساب وإرسال رسالة تأكيد إلى بريدك.",
       });
+      showVisualAssistant({
+        mood: "celebrate",
+        text: "الحساب اتعمل بنجاح! افتحي بريدك واضغطي رابط التأكيد عشان نكمّل.",
+        duration: 10000,
+        priority: 4,
+      });
     } catch {
       setMessage({
         type: "error",
@@ -190,6 +207,12 @@ export function AuthPage() {
         text:
           "اكتبي البريد الإلكتروني وكلمة المرور.",
       });
+      showVisualAssistant({
+        mood: "confused",
+        text: "اكتبي البريد الإلكتروني وكلمة المرور، وبعدها جرّبي تاني.",
+        duration: 7500,
+        priority: 3,
+      });
 
       return;
     }
@@ -207,6 +230,12 @@ export function AuthPage() {
           type: "error",
           text: result.message,
         });
+        showVisualAssistant({
+          mood: "sympathy",
+          text: result.message,
+          duration: 8500,
+          priority: 3,
+        });
 
         return;
       }
@@ -220,8 +249,25 @@ export function AuthPage() {
         "devplay-remember-me",
         String(rememberMe),
       );
+      showVisualAssistant({
+        mood: "celebrate",
+        text: "تم تسجيل الدخول بنجاح! بنجهّز حسابك دلوقتي.",
+        duration: 5000,
+        priority: 4,
+      });
+      queueVisualAssistant({
+        mood: "celebrate",
+        text: "نورتِ DevPlay! تسجيل الدخول تم بنجاح—يلا نبدأ 🎉",
+        duration: 9000,
+        priority: 7,
+        spotlight: true,
+      });
 
-      window.location.href = "/account";
+      const requestedPath = new URLSearchParams(window.location.search).get("next");
+      const safeNextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//")
+        ? requestedPath
+        : "/account";
+      window.location.href = safeNextPath;
     } catch {
       setMessage({
         type: "error",
@@ -252,7 +298,7 @@ export function AuthPage() {
 
     try {
       const redirectTo =
-        `${window.location.origin}/auth/reset-password`;
+        `${window.location.origin}/auth/callback?next=/auth/reset-password`;
 
       const { error } =
         await supabase.auth.resetPasswordForEmail(
@@ -322,7 +368,7 @@ export function AuthPage() {
   return (
     <main className={styles.page}>
       <section className={styles.card}>
-        <a
+        <Link
           className={styles.brand}
           href="/"
           aria-label="DevPlay Top Up"
@@ -335,8 +381,18 @@ export function AuthPage() {
             <strong>DevPlay Top Up</strong>
             <small>BY SHAH​​D ELBARY</small>
           </div>
-        </a>
+        </Link>
 
+        {(view === "login" || view === "register") && (
+          <>
+            <div className={styles.authTabs} role="tablist" aria-label="اختيار طريقة الدخول">
+              <button type="button" role="tab" aria-selected={view === "login"} className={view === "login" ? styles.activeTab : ""} onClick={() => changeView("login")}>تسجيل الدخول</button>
+              <button type="button" role="tab" aria-selected={view === "register"} className={view === "register" ? styles.activeTab : ""} onClick={() => changeView("register")}>حساب جديد</button>
+            </div>
+            <a className={styles.googleButton} href="/auth/google"><b aria-hidden="true">G</b><span>المتابعة باستخدام Google</span><small>دخول سريع وآمن</small></a>
+            <div className={styles.divider}><span>أو باستخدام البريد الإلكتروني</span></div>
+          </>
+        )}
         {view === "login" && (
           <>
             <div className={styles.heading}>
@@ -482,7 +538,7 @@ export function AuthPage() {
 
               <p>
                 أنشئي حسابًا لحفظ محفظتك
-                وطلباتك ومكافآتك.
+                وطلباتك وكوبوناتك.
               </p>
             </div>
 

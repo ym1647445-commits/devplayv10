@@ -21,7 +21,7 @@ export default async function AdminSettingsPage(){const supabase=await createCli
   {title:"باقات المورد",description:"استيراد عروض المورد وربطها بالمنتجات الرئيسية.",href:"/admin/provider-offers",icon:PackagePlus,meta:`${offersR.count??0} باقة متاحة`,tone:"primary"},
   {title:"المنتجات",description:"إدارة الألعاب والخدمات والباقات التابعة.",href:"/admin/products",icon:Boxes,meta:`${productsR.count??0} منتج نشط`,tone:"default"},
   {title:"الطلبات",description:"متابعة طلبات العملاء والتنفيذ وحالة المورد.",href:"/admin/orders",icon:PackageSearch,meta:`${ordersR.count??0} طلب`,tone:"default"},
-  {title:"العملاء",description:"ملفات العملاء والمحافظ والنقاط والدعم 360°.",href:"/admin/users",icon:UsersRound,meta:`${customersR.count??0} عميل`,tone:"default"},
+  {title:"العملاء",description:"ملفات العملاء والمحافظ والدعم 360°.",href:"/admin/users",icon:UsersRound,meta:`${customersR.count??0} عميل`,tone:"default"},
   {title:"الإيداعات",description:"مراجعة إثباتات التحويل وإضافة الرصيد.",href:"/admin/deposits",icon:WalletCards,meta:`${pendingDepositsR.count??0} تحتاج مراجعة`,tone:(pendingDepositsR.count??0)>0?"warning":"success"},
   {title:"الكوبونات",description:"الخصومات والجمهور والنطاق وحماية الأرباح.",href:"/admin/coupons",icon:TicketPercent,meta:"إدارة العروض",tone:"default"},
   {title:"الإشعارات",description:"إرسال الحملات ومتابعة تنبيهات العملاء.",href:"/admin/notifications",icon:Bell,meta:"مركز التواصل",tone:"default"},

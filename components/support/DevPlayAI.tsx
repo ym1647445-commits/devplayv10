@@ -1,13 +1,14 @@
 "use client";
 import { Bot, Headphones, ImagePlus, LoaderCircle, Send, X } from "lucide-react";
 import Link from "next/link";
-import { useRef,useState } from "react";
+import { useEffect,useRef,useState } from "react";
 import styles from "./DevPlayAI.module.css";
 
 type ChatMessage={role:"user"|"assistant";text:string};
 export function DevPlayAI(){
  const[open,setOpen]=useState(false),[message,setMessage]=useState(""),[image,setImage]=useState<File|null>(null),[loading,setLoading]=useState(false),[messages,setMessages]=useState<ChatMessage[]>([{role:"assistant",text:"أهلًا! أنا DevPlay AI. اشرح لي ما تحتاجه، ويمكنك إرفاق صورة للمشكلة."}]);
  const inputRef=useRef<HTMLInputElement>(null);
+ useEffect(()=>{const open=()=>setOpen(true);window.addEventListener("devplay:open-ai",open);return()=>window.removeEventListener("devplay:open-ai",open)},[]);
  async function send(){if(!message.trim()||loading)return;const text=message.trim();setMessages(v=>[...v,{role:"user",text}]);setMessage("");setLoading(true);const form=new FormData();form.set("message",text);form.set("history",messages.slice(-8).map(m=>`${m.role}: ${m.text}`).join("\n"));if(image)form.set("image",image);setImage(null);
   try{const response=await fetch("/api/support/ai",{method:"POST",body:form});const data=await response.json();if(!response.ok)throw new Error(data.error);setMessages(v=>[...v,{role:"assistant",text:`${data.reply}${data.ticketId?`\nرقم المحادثة: ${data.ticketId}`:""}`}]);}catch(error){setMessages(v=>[...v,{role:"assistant",text:error instanceof Error?error.message:"حدث خطأ غير متوقع."}]);}finally{setLoading(false)}}
  return <><button className={styles.launcher} onClick={()=>setOpen(true)} aria-label="فتح DevPlay AI"><Bot size={24}/><span>AI</span></button>{open&&<section className={styles.panel} aria-label="محادثة DevPlay AI">

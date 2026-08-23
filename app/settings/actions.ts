@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { updateAuthenticatedPassword } from "@/lib/auth/password";
 import { createClient } from "@/lib/supabase/server";
 import type { AccentColor, DisplayDensity, FontSize, ThemeMode } from "@/types/theme";
 
@@ -98,4 +99,9 @@ export async function updateCustomerSettings(payload: SettingsPayload): Promise<
   }
   revalidatePath("/settings"); revalidatePath("/account");
   return { success: true, message: "تم حفظ إعداداتك بنجاح." };
+}
+
+export async function changePassword(newPassword: string, currentPassword?: string) {
+  if (!currentPassword) return { success: false, message: "كلمة المرور الحالية مطلوبة." };
+  return updateAuthenticatedPassword(newPassword, currentPassword);
 }

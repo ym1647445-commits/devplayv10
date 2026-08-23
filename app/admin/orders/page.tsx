@@ -557,7 +557,7 @@ export default async function AdminOrdersPage() {
 
           <p>
             متابعة طلبات المنتجات، بيانات
-            التنفيذ، المورد والنقاط.
+            التنفيذ والمورد وحالة الطلب.
           </p>
         </div>
 

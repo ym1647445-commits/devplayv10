@@ -1,0 +1,16 @@
+name: Item4Gamer supplier worker
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch and synchronize Item4Gamer orders
+        run: |
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${{ secrets.SUPPLIER_WORKER_SECRET }}" \
+            "https://devplaystudio.com/api/cron/item4gamer"

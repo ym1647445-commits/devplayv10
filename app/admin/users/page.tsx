@@ -460,7 +460,7 @@ export default async function AdminUsersPage() {
 
           <p>
             متابعة الحسابات والمحافظ
-            والنقاط ومستويات العملاء.
+            وحالة الحساب ومستويات العملاء.
           </p>
         </div>
 

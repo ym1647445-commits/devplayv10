@@ -1,13 +1,14 @@
 "use client";
 
-import { Bell, CalendarHeart, Check, Languages, LoaderCircle, LockKeyhole, MonitorCog, RotateCcw, Save, ShieldCheck, UserRound } from "lucide-react";
+import { Bell, CalendarHeart, Check, KeyRound, Languages, LoaderCircle, LockKeyhole, MonitorCog, RotateCcw, Save, ShieldCheck, UserRound } from "lucide-react";
 import { useState } from "react";
 
+import { PasswordForm } from "@/components/auth/PasswordForm";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import type { AccentColor, DisplayDensity, FontSize, ThemeMode } from "@/types/theme";
 
-import { updateCustomerSettings, type SettingsPayload } from "./actions";
+import { changePassword, updateCustomerSettings, type SettingsPayload } from "./actions";
 import styles from "./settings.module.css";
 
 const themeOptions: Array<{value:ThemeMode;label:string;description:string}>=[
@@ -29,6 +30,7 @@ export function SettingsClient({ initial }: { initial: SettingsPayload }) {
     </div>
     <div className={styles.column}>
       <section className={styles.panel}><header><span><Bell size={18}/></span><div><strong>الإشعارات</strong><small>تحكمي في أنواع التنبيهات التي تصلك.</small></div></header><div className={styles.toggles}><Toggle label="إشعارات داخل الموقع" description="إظهار تحديثات الحساب داخل DevPlay." checked={form.inAppEnabled} onChange={v=>update("inAppEnabled",v)}/><Toggle label="البريد الإلكتروني" description="السماح بإرسال التنبيهات إلى بريدك." checked={form.emailEnabled} onChange={v=>update("emailEnabled",v)}/><Toggle label="تحديثات الطلبات" description="إنشاء الطلب وتغير حالته واكتماله." checked={form.orderNotifications} onChange={v=>update("orderNotifications",v)}/><Toggle label="طلبات الإيداع" description="مراجعة وقبول أو رفض إضافة الرصيد." checked={form.depositNotifications} onChange={v=>update("depositNotifications",v)}/><Toggle label="العروض والتخفيضات" description="العروض الجديدة والكوبونات المتاحة." checked={form.promotionNotifications} onChange={v=>update("promotionNotifications",v)}/><Toggle label="تنبيهات الأمان" description="تغيرات الحساب والتنبيهات المهمة." checked={form.securityNotifications} onChange={v=>update("securityNotifications",v)}/></div></section>
+      <section className={styles.panel}><header><span><KeyRound size={18}/></span><div><strong>تغيير كلمة المرور</strong><small>أكدي كلمة المرور الحالية ثم اختاري كلمة جديدة. حساب Google فقط يمكنه استخدام «نسيت كلمة المرور» لإنشاء واحدة.</small></div></header><PasswordForm submitLabel="تحديث كلمة المرور" onSubmit={changePassword} requireCurrentPassword/></section>
       <section className={styles.security}><ShieldCheck size={22}/><div><strong>إعدادات آمنة</strong><p>لا تعرض هذه الصفحة كلمة المرور أو مفاتيح المورد. يتم حفظ إعدادات الحساب للمستخدم المسجل فقط.</p></div></section>
       {message&&<p className={message.type==="success"?styles.success:styles.error} role="alert">{message.text}</p>}
       <div className={styles.actions}><button type="button" className={styles.reset} onClick={()=>{resetAppearance();setForm(c=>({...c,theme:"dark",accentColor:"violet",fontSize:"medium",displayDensity:"compact",reduceMotion:false}))}}><RotateCcw size={16}/> الافتراضي</button><button type="button" className={styles.save} disabled={saving} onClick={()=>void save()}>{saving?<LoaderCircle className={styles.spinner} size={17}/>:<Save size={17}/>} حفظ الإعدادات</button></div>

@@ -20,6 +20,10 @@ import {
   type FormEvent,
 } from "react";
 
+import {
+  showVisualAssistant,
+  trackAssistantRequest,
+} from "@/components/assistant/visualAssistantEvents";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
@@ -410,9 +414,21 @@ export function DepositForm({
         ? data[0]
         : data;
 
-      setCreatedRequest(
-        result as CreatedDepositRequest,
-      );
+      const createdDeposit = result as CreatedDepositRequest;
+      setCreatedRequest(createdDeposit);
+      trackAssistantRequest({
+        type: "deposit",
+        id: createdDeposit.id,
+        displayId: createdDeposit.deposit_id,
+        status: createdDeposit.status,
+      });
+      showVisualAssistant({
+        mood: "sit",
+        text: `طلب إضافة الرصيد ${createdDeposit.deposit_id} اتبعت بنجاح. خلّينا نستنى الموافقة عليه سوا 💜`,
+        action: { label: "متابعة الطلب", href: "/orders" },
+        duration: 12000,
+        priority: 6,
+      });
 
       setMessage({
         type: "success",

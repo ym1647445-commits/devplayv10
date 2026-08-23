@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Download,
   Gamepad2,
   Gift,
   Headphones,
@@ -256,7 +257,9 @@ export default function HomePage() {
 
         <section className="home-about"><div><span>ABOUT DEVPLAY</span><h2>تجربة شحن رقمية أبسط، أوضح، وأكثر أمانًا.</h2><p>DevPlay Top Up متجر رقمي لشحن الألعاب والخدمات وشراء البطاقات. نختار الباقات المتاحة من المورد، نتحقق من السعر داخل السيرفر، ونحفظ كل خطوة في طلبك حتى تتابعي التنفيذ من مكان واحد.</p><ul><li><CheckCircle2/> منتجات وباقات تدار من لوحة DevPlay</li><li><CheckCircle2/> دفع مباشر من محفظتك</li><li><CheckCircle2/> متابعة تلقائية للشحن وأكواد التفعيل</li></ul></div><aside><strong>DEVPLAY TOP UP</strong><small>Managed by Shahd Elbary</small><Link href="/products">ابدئي التصفح <ArrowLeft/></Link></aside></section>
 
-        <footer className="home-footer"><div><strong>Dev<span>Play</span></strong><small>TOP UP · DIGITAL SERVICES</small></div><nav><Link href="/products">المنتجات</Link><Link href="/categories">الأقسام</Link><Link href="/orders">طلباتي</Link><Link href="/settings">الإعدادات</Link></nav><p>© {new Date().getFullYear()} DevPlay Top Up. جميع الحقوق محفوظة.<br/>Developed & managed by Shahd Elbary.</p></footer>
+        <Link className="home-download-badge" href="/download"><img src="/devplay-app-icon-192.png" alt="تطبيق DevPlay"/><div><small>DEVPLAY WEB APP</small><strong>ثبّتي DevPlay على جهازك</strong><span>تجربة أسرع وتحديثات تلقائية بدون انتظار المتجر</span></div><b>تنزيل التطبيق <Download/></b></Link>
+
+        <footer className="home-footer"><div><strong>Dev<span>Play</span></strong><small>TOP UP · DIGITAL SERVICES</small></div><nav><Link href="/products">المنتجات</Link><Link href="/categories">الأقسام</Link><Link href="/download">تنزيل التطبيق</Link><Link href="/orders">طلباتي</Link><Link href="/settings">الإعدادات</Link></nav><p>© {new Date().getFullYear()} DevPlay Top Up. جميع الحقوق محفوظة.<br/>Developed & managed by Shahd Elbary.</p></footer>
       </section>
     </AppShell>
   );

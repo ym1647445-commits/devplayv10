@@ -3,25 +3,11 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { CheckoutClient } from "@/components/checkout/CheckoutClient";
 import { AppShell } from "@/components/layout/AppShell";
-import { createClient } from "@/lib/supabase/server";
 
-export default async function CheckoutPage() {
-  const supabase =
-    await createClient();
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    redirect("/auth");
-  }
-
+export default function CheckoutPage() {
   return (
     <AppShell>
       <section className="checkout-page">

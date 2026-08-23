@@ -1,0 +1,25 @@
+name: Item4Gamer supplier worker v2
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: devplay-item4gamer-worker
+  cancel-in-progress: false
+
+jobs:
+  dispatch-sync-refund:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Dispatch, synchronize, and reconcile Item4Gamer orders
+        env:
+          SUPPLIER_WORKER_SECRET: ${{ secrets.SUPPLIER_WORKER_SECRET }}
+        run: |
+          test -n "$SUPPLIER_WORKER_SECRET"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 5 --max-time 90 \
+            --header "Authorization: Bearer $SUPPLIER_WORKER_SECRET" \
+            "https://devplaystudio.com/api/cron/item4gamer-v2"

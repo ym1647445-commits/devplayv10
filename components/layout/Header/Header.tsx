@@ -182,11 +182,6 @@ export function Header() {
       icon: TicketPercent,
     },
     {
-      title: "النقاط والمكافآت",
-      href: "/rewards",
-      icon: Gift,
-    },
-    {
       title: "المفضلة",
       href: "/favorites",
       icon: Heart,
@@ -436,25 +431,6 @@ export function Header() {
                           3,
                         )}
                       </small>
-                    </span>
-                  </Link>
-
-                  <Link
-                    href="/rewards"
-                    onClick={() =>
-                      setMenuOpen(false)
-                    }
-                  >
-                    <Coins size={15} />
-
-                    <span>
-                      <small>
-                        النقاط
-                      </small>
-
-                      <strong>
-                        {profile.points}
-                      </strong>
                     </span>
                   </Link>
                 </div>

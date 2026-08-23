@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import styles from "./PWAClient.module.css";
 
 interface InstallPromptEvent extends Event { prompt():Promise<void>; userChoice:Promise<{outcome:"accepted"|"dismissed"}> }
+type InstallWindow = Window & { __devplayInstallPrompt?: InstallPromptEvent };
 
 export function PWAClient() {
   const [promptEvent,setPromptEvent]=useState<InstallPromptEvent|null>(null);
@@ -20,13 +21,13 @@ export function PWAClient() {
       setDismissed(hidden||standalone);
       setShowIOS(ios&&!standalone&&!hidden);
     },0);
-    const handler=(event:Event)=>{event.preventDefault();setPromptEvent(event as InstallPromptEvent);setDismissed(false)};
+    const handler=(event:Event)=>{event.preventDefault();const installEvent=event as InstallPromptEvent;(window as InstallWindow).__devplayInstallPrompt=installEvent;window.dispatchEvent(new CustomEvent("devplay-install-prompt"));setPromptEvent(installEvent);setDismissed(false)};
     window.addEventListener("beforeinstallprompt",handler);
     return()=>{window.clearTimeout(initializeWindowState);window.removeEventListener("beforeinstallprompt",handler)};
   },[]);
 
   function dismiss(){sessionStorage.setItem("devplay-install-dismissed","1");setDismissed(true);setShowIOS(false)}
-  async function install(){if(!promptEvent)return;await promptEvent.prompt();const choice=await promptEvent.userChoice;if(choice.outcome==="accepted")setDismissed(true);setPromptEvent(null)}
+  async function install(){if(!promptEvent)return;await promptEvent.prompt();const choice=await promptEvent.userChoice;if(choice.outcome==="accepted")setDismissed(true);delete (window as InstallWindow).__devplayInstallPrompt;setPromptEvent(null)}
   if(dismissed||(!promptEvent&&!showIOS))return null;
   return <aside className={styles.prompt} role="status" dir="rtl"><span>{showIOS?<Share2/>:<Download/>}</span><div><strong>ثبّتي تطبيق DevPlay</strong><small>{showIOS?"من زر المشاركة اختاري «إضافة إلى الشاشة الرئيسية».":"دخول أسرع وتجربة كاملة مثل التطبيق."}</small></div>{promptEvent&&<button onClick={()=>void install()}>تثبيت</button>}<button className={styles.close} onClick={dismiss} aria-label="إغلاق"><X/></button></aside>;
 }
