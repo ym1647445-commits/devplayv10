@@ -46,9 +46,11 @@ export async function sendItem4GamerPendingNow(): Promise<Item4GamerControlResul
     refreshPages();
     return {
       success: true,
-      message: result.processed
-        ? `تم إرسال ${result.processed} مهمة إلى Item4Gamer.`
-        : "لا توجد مهام Item4Gamer جاهزة للإرسال.",
+      message: "skipped" in result&&result.skipped
+        ? "إرسال الطلبات إلى المورد متوقف من إعدادات المنصة."
+        : result.processed
+          ? `تم إرسال ${result.processed} مهمة إلى Item4Gamer.`
+          : "لا توجد مهام Item4Gamer جاهزة للإرسال.",
       details: { processed: result.processed },
     };
   } catch (error) {

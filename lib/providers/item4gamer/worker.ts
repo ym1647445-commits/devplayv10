@@ -3,6 +3,7 @@ import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { item4gamerAdapter } from "./adapter";
+import { readPlatformStatus } from "@/lib/platform-status";
 
 interface Job {
   id: string; order_id: string; order_item_id: string; supplier_product_id: string | null;
@@ -47,6 +48,8 @@ function finalState(status: string) {
 
 export async function dispatchItem4GamerJobs(limit = 25) {
   const db = database();
+  const platformStatus=await readPlatformStatus(db);
+  if(platformStatus.maintenanceMode||!platformStatus.supplierDispatchEnabled)return {processed:0,skipped:true};
   const { data: jobs, error } = await db.from("product_supplier_jobs")
     .select("id,order_id,order_item_id,supplier_product_id,provider_offer_id,input_values,attempts_count,idempotency_key,supplier_order_id")
     .eq("provider_code", "item4gamer").eq("status", "sending").eq("delivery_state", "not_sent")

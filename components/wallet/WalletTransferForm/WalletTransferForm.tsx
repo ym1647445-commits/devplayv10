@@ -35,7 +35,7 @@ export function WalletTransferForm({ balanceUsd, usdRate, initialCustomerId="", 
       const details = error && typeof error === "object" && "message" in error
         ? String(error.message)
         : "تعذر إرسال الرصيد.";
-      setMessage(details);
+      setMessage(/PLATFORM_MAINTENANCE|WALLET_TRANSFERS_PAUSED/i.test(details)?"تحويلات المحفظة متوقفة مؤقتًا.":details);
     }
     finally{setLoading(false)}
   }

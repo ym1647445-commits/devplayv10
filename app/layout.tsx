@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { VisualAssistant } from "@/components/assistant/VisualAssistant";
+import { PlatformStatusGate } from "@/components/maintenance/PlatformStatusGate";
 import { OrganizationJsonLd } from "@/components/seo/OrganizationJsonLd";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
@@ -32,6 +33,6 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="ar" dir="rtl" data-theme="dark" data-accent="violet" data-font-size="medium" data-density="compact" data-reduce-motion="false" suppressHydrationWarning>
-    <body><OrganizationJsonLd/><ThemeProvider><AuthProvider>{children}<VisualAssistant/><PWAClient/></AuthProvider></ThemeProvider></body>
+    <body><OrganizationJsonLd/><ThemeProvider><AuthProvider>{children}<PlatformStatusGate/><VisualAssistant/><PWAClient/></AuthProvider></ThemeProvider></body>
   </html>;
 }

@@ -15,6 +15,7 @@ import {
 import {
   createClient,
 } from "@/lib/supabase/server";
+import { assertOperationEnabled } from "@/lib/platform-status";
 
 import type {
   CheckoutActionResult,
@@ -198,6 +199,10 @@ function translateCheckoutError(
     return "لا يمكن تطبيق الكوبون لأن الخصم يتجاوز الحد الآمن.";
   }
 
+  if (normalized.includes("platform_maintenance") || normalized.includes("orders_paused")) {
+    return "إنشاء الطلبات متوقف مؤقتًا. يمكنك متابعة طلباتك السابقة من صفحة طلباتي.";
+  }
+
   if (
     normalized.includes(
       "authentication required",
@@ -245,6 +250,8 @@ export async function createCheckoutOrder(
           "يجب تسجيل الدخول أولًا.",
       };
     }
+
+    await assertOperationEnabled(supabase,"orders");
 
     if (
       !payload.items ||

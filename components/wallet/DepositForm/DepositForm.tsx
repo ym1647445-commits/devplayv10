@@ -446,7 +446,9 @@ export function DepositForm({
         type: "error",
         text:
           error instanceof Error
-            ? error.message
+            ? /PLATFORM_MAINTENANCE|DEPOSITS_PAUSED/i.test(error.message)
+              ? "طلبات إضافة الرصيد متوقفة مؤقتًا."
+              : error.message
             : "حدث خطأ أثناء إرسال الطلب.",
       });
     } finally {
