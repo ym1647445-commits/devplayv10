@@ -981,6 +981,7 @@ export function ProductDetails({
                   requiredFields.map(
                     (field) => (
                       <label
+                        data-companion-target="player-id"
                         key={
                           field.id
                         }

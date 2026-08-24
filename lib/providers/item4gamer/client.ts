@@ -44,6 +44,7 @@ export async function item4gamerRequest<T extends Record<string, unknown>>(
     signal: init.signal ?? AbortSignal.timeout(20_000),
     headers: {
       Accept: "application/json",
+      "User-Agent": "DevPlayStudio/1.0 (+https://devplaystudio.com)",
       "api-key": apiKey,
       ...(init.body ? { "Content-Type": "application/json" } : {}),
       ...init.headers,
@@ -55,7 +56,19 @@ export async function item4gamerRequest<T extends Record<string, unknown>>(
   try {
     payload = text ? (JSON.parse(text) as ApiEnvelope<T>) : null;
   } catch {
-    throw new Item4GamerApiError("Item4Gamer returned an invalid response", response.status, text);
+    const contentType = response.headers.get("content-type") ?? "unknown";
+    const preview = text
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 240);
+    throw new Item4GamerApiError(
+      `Item4Gamer returned non-JSON (HTTP ${response.status}, ${contentType})${preview ? `: ${preview}` : ""}`,
+      response.status,
+      { status: response.status, contentType, preview },
+    );
   }
 
   const data = payload?.data;

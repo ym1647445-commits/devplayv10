@@ -17,6 +17,10 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 
 import styles from "./VisualAssistant.module.css";
+import { CompanionMenu, type TutorialId } from "./CompanionMenu";
+import { CompanionSetup } from "./CompanionSetup";
+import { RockPaperScissorsGame } from "./RockPaperScissorsGame";
+import { DEFAULT_COMPANION_PREFERENCES, readCompanionPreferences, saveCompanionPreferences, subscribeToCompanionPreferences } from "./companionPreferences";
 import { TicTacToeGame } from "./TicTacToeGame";
 import {
   consumeQueuedVisualAssistant,
@@ -63,8 +67,14 @@ export function VisualAssistant() {
   const [typing, setTyping] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [gameOpen, setGameOpen] = useState(false);
+  const [rpsOpen, setRpsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [savingCompanion, setSavingCompanion] = useState(false);
+  const [companionReady, setCompanionReady] = useState(false);
   const [gameInvited, setGameInvited] = useState(false);
   const [playfulMood, setPlayfulMood] = useState<PlayfulMood>("idle");
+  const [companion, setCompanion] = useState(DEFAULT_COMPANION_PREFERENCES);
   const [roaming, setRoaming] = useState<RoamingState>({ ...SAFE_POSITION, direction: "right", moving: false });
   const timerRef = useRef<number | null>(null);
   const walkTimerRef = useRef<number | null>(null);
@@ -75,6 +85,25 @@ export function VisualAssistant() {
   const teasedElementRef = useRef<HTMLElement | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const suppressClickRef = useRef(false);
+
+  useEffect(() => {
+    const local = readCompanionPreferences();
+    setCompanion(local);
+    const unsubscribe = subscribeToCompanionPreferences(setCompanion);
+    if (!loading) {
+      if (!user) setCompanionReady(true);
+      else void supabase.from("customer_companion_preferences").select("name,tone,theme,color,size,enabled,roaming_enabled,game_invites_enabled,onboarding_completed").eq("user_id",user.id).maybeSingle().then(({data,error})=>{
+        if (!error && data) {
+          const synced={name:data.name,tone:data.tone,theme:data.theme,color:data.color,size:data.size,enabled:data.enabled,roamingEnabled:data.roaming_enabled,gameInvitesEnabled:data.game_invites_enabled,onboardingCompleted:data.onboarding_completed} as typeof local;
+          setCompanion(saveCompanionPreferences(synced));
+        }
+        setCompanionReady(true);
+      });
+    }
+    return unsubscribe;
+  }, [loading, supabase, user]);
+
+  useEffect(()=>{if(companionReady&&user&&!companion.onboardingCompleted&&!pathname.startsWith("/admin"))setSetupOpen(true)},[companion.onboardingCompleted,companionReady,pathname,user]);
 
   const clearMoodTimer = useCallback(() => {
     if (moodTimerRef.current) window.clearTimeout(moodTimerRef.current);
@@ -193,7 +222,7 @@ export function VisualAssistant() {
   }, [loading, present, supabase, user]);
 
   useEffect(() => {
-    if (gameOpen || message || typing || pathname.startsWith("/admin")) return;
+    if (!companion.gameInvitesEnabled || gameOpen || message || typing || pathname.startsWith("/admin")) return;
     let scrollCount = 0;
     let inviteTimer: number | null = null;
     const reset = () => {
@@ -226,7 +255,7 @@ export function VisualAssistant() {
       window.removeEventListener("keydown", reset);
       if (inviteTimer) window.clearTimeout(inviteTimer);
     };
-  }, [gameOpen, message, pathname, present, typing]);
+  }, [companion.gameInvitesEnabled, gameOpen, message, pathname, present, typing]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -264,7 +293,7 @@ export function VisualAssistant() {
   }, [returnToSafePosition]);
 
   useEffect(() => {
-    if (message || typing || dragging || gameOpen || pathname.startsWith("/admin")) return;
+    if (!companion.roamingEnabled || message || typing || dragging || gameOpen || pathname.startsWith("/admin")) return;
     const roam = () => {
       if (motionIsReduced()) return;
       const maxX = Math.max(0, Math.min(window.innerWidth * .38, 440) - 75);
@@ -281,10 +310,10 @@ export function VisualAssistant() {
     };
     const interval = window.setInterval(roam, ROAM_INTERVAL_MS);
     return () => window.clearInterval(interval);
-  }, [dragging, gameOpen, message, pathname, typing]);
+  }, [companion.roamingEnabled, dragging, gameOpen, message, pathname, typing]);
 
   useEffect(() => {
-    if (message || typing || dragging || gameOpen || pathname.startsWith("/admin")) return;
+    if (!companion.roamingEnabled || message || typing || dragging || gameOpen || pathname.startsWith("/admin")) return;
     const tease = () => {
       if (motionIsReduced() || !rootRef.current) return;
       const candidates = Array.from(document.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]"))
@@ -322,7 +351,7 @@ export function VisualAssistant() {
       window.clearTimeout(firstTease);
       window.clearInterval(interval);
     };
-  }, [dragging, gameOpen, message, pathname, showPlayfulMood, typing]);
+  }, [companion.roamingEnabled, dragging, gameOpen, message, pathname, showPlayfulMood, typing]);
 
   useEffect(() => {
     if (message || typing || dragging || gameOpen || pathname.startsWith("/admin")) return;
@@ -368,6 +397,26 @@ export function VisualAssistant() {
     if (teasedElementRef.current) delete teasedElementRef.current.dataset.assistantTeased;
   }, []);
 
+  async function saveCompanionSetup() {
+    if (!user) { window.location.href="/auth?next=/"; return; }
+    setSavingCompanion(true);
+    const normalized=saveCompanionPreferences({...companion,onboardingCompleted:true});
+    const {error}=await supabase.from("customer_companion_preferences").upsert({user_id:user.id,name:normalized.name,tone:normalized.tone,theme:normalized.theme,color:normalized.color,size:normalized.size,enabled:normalized.enabled,roaming_enabled:normalized.roamingEnabled,game_invites_enabled:normalized.gameInvitesEnabled,onboarding_completed:true,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+    setSavingCompanion(false);
+    if (!error) { setCompanion(normalized); setSetupOpen(false); present({mood:"celebrate",text:`تمام! أنا ${normalized.name}، صديقك الجديد في DevPlay 🎉`,duration:10000,priority:8,hearts:true}); }
+  }
+
+  function runTutorial(id: TutorialId) {
+    const tutorials:Record<TutorialId,{href:string;selector:string;text:string}>={search:{href:"/",selector:"a[href=\"/search\"]",text:"من زر البحث هنا تقدر توصل للعبة أو البطاقة بسرعة."},signup:{href:"/",selector:"a[href^=\"/auth\"]",text:"التسجيل يحفظ محفظتك وطلباتك وإعدادات صديقك على كل أجهزتك."},"player-id":{href:"/products",selector:"[data-companion-target=\"player-id\"]",text:"بعد اختيار باقة الشحن، اكتب Player ID هنا بالضبط كما يظهر داخل اللعبة."},deposit:{href:"/wallet/deposit",selector:"form",text:"من نموذج الإيداع تختار الطريقة، تكتب المبلغ وترفع إثبات التحويل."},orders:{href:"/orders",selector:".orders-page",text:"هنا تتابع طلبات المنتجات والإيداع وحالتها لحظة بلحظة."}};
+    const tutorial=tutorials[id]; setMenuOpen(false);
+    if(pathname!==tutorial.href&&!(id==="player-id"&&pathname.startsWith("/products/"))){sessionStorage.setItem("devplay:companion:tutorial",id);window.location.href=tutorial.href;return}
+    const target=document.querySelector<HTMLElement>(tutorial.selector);
+    if(!target){present({mood:"point",text:tutorial.text,action:id==="player-id"?{label:"اختر منتجًا",href:"/products"}:undefined,duration:11000,priority:7});return}
+    target.dataset.companionTargetActive="true";target.scrollIntoView({behavior:motionIsReduced()?"auto":"smooth",block:"center"});present({mood:"point",text:tutorial.text,duration:11000,priority:7});window.setTimeout(()=>delete target.dataset.companionTargetActive,10000);
+  }
+
+  useEffect(()=>{const queued=sessionStorage.getItem("devplay:companion:tutorial") as TutorialId|null;if(!queued)return;sessionStorage.removeItem("devplay:companion:tutorial");window.setTimeout(()=>runTutorial(queued),700)},[pathname]);
+
   function handlePointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
     if (message || motionIsReduced()) return;
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -408,9 +457,12 @@ export function VisualAssistant() {
     moodTimerRef.current = window.setTimeout(() => showPlayfulMood("sulk", 2800), 800);
   }
 
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin") || !companion.enabled) return null;
 
   return (
+    <>
+    {setupOpen&&<CompanionSetup value={companion} onChange={setCompanion} onComplete={()=>void saveCompanionSetup()} onClose={companion.onboardingCompleted?()=>setSetupOpen(false):undefined} saving={savingCompanion}/>}
+    {menuOpen&&<CompanionMenu name={companion.name} onClose={()=>setMenuOpen(false)} onTutorial={runTutorial} onSetup={()=>{setMenuOpen(false);setSetupOpen(true)}} onTicTacToe={()=>{setMenuOpen(false);setGameOpen(true)}} onRps={()=>{setMenuOpen(false);setRpsOpen(true)}}/>}
     <aside
       ref={rootRef}
       className={styles.root}
@@ -421,17 +473,22 @@ export function VisualAssistant() {
       data-roaming={roaming.moving ? "true" : "false"}
       data-spotlight={message?.spotlight ? "true" : "false"}
       data-hearts={message?.hearts ? "true" : "false"}
+      data-tone={companion.tone}
+      data-theme={companion.theme}
+      data-color={companion.color}
+      data-size={companion.size}
       style={{ "--assistant-x": `${roaming.x}px`, "--assistant-y": `${roaming.y}px` } as CSSProperties}
       aria-live="polite"
     >
       <button
         type="button"
         className={styles.mascot}
-        aria-label="مساعد DevPlay — يمكن سحبه"
+        aria-label={`${companion.name}، صديق DevPlay — يمكن سحبه`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onDoubleClick={()=>{setMenuOpen(true);setMessage(null)}}
         onClick={() => {
           if (suppressClickRef.current) {
             suppressClickRef.current = false;
@@ -439,13 +496,13 @@ export function VisualAssistant() {
           }
           present({
             mood: "wave",
-            text: "أهلًا! أنا Dev 👋 تحبي نطلب مساعدة ولا نلعب جولة سريعة؟",
+            text: companion.tone === "calm" ? `أهلًا، أنا ${companion.name}. أنا هنا لو احتجت أي مساعدة.` : companion.tone === "energetic" ? `يلا بينا! أنا ${companion.name} ⚡ نطلب مساعدة ولا نلعب جولة؟` : `أهلًا! أنا ${companion.name} 👋 تحبي نطلب مساعدة ولا نلعب جولة سريعة؟`,
             action: { label: "تواصل مع الدعم", href: "/support" },
             duration: 12000,
             priority: 3,
             hearts: true,
           });
-          setGameInvited(true);
+          setGameInvited(companion.gameInvitesEnabled);
         }}
       >
         <span className={styles.antenna} />
@@ -475,6 +532,7 @@ export function VisualAssistant() {
           )}
         </div>
       )}
+      {rpsOpen&&<RockPaperScissorsGame friendName={companion.name} onClose={()=>setRpsOpen(false)} onResult={(mood)=>showPlayfulMood(mood,2200)}/>}
       {gameOpen && (
         <TicTacToeGame
           onClose={() => setGameOpen(false)}
@@ -482,5 +540,6 @@ export function VisualAssistant() {
         />
       )}
     </aside>
+    </>
   );
 }

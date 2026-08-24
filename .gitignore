@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local editors and native app workspace
+/.vscode/
+/android-app/
+/app/.idea/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

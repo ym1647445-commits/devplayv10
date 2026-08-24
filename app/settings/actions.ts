@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { updateAuthenticatedPassword } from "@/lib/auth/password";
 import { createClient } from "@/lib/supabase/server";
 import type { AccentColor, DisplayDensity, FontSize, ThemeMode } from "@/types/theme";
+import type { CompanionPreferences } from "@/components/assistant/companionPreferences";
 
 export interface SettingsPayload {
   fullName: string;
@@ -23,6 +24,7 @@ export interface SettingsPayload {
   depositNotifications: boolean;
   promotionNotifications: boolean;
   securityNotifications: boolean;
+  companion: CompanionPreferences;
 }
 
 const themes = new Set<ThemeMode>(["dark", "light", "oled", "high-contrast"]);
@@ -49,7 +51,7 @@ export async function updateCustomerSettings(payload: SettingsPayload): Promise<
     return { success: false, message: "إحدى قيم الإعدادات غير صحيحة." };
   }
 
-  const [profileResult, preferencesResult, birthDateResult] = await Promise.all([
+  const [profileResult, preferencesResult, birthDateResult, companionResult] = await Promise.all([
     supabase.from("profiles").update({
       full_name: fullName,
       phone: phone || null,
@@ -74,9 +76,11 @@ export async function updateCustomerSettings(payload: SettingsPayload): Promise<
     !payload.birthDateLocked && payload.birthDate
       ? supabase.rpc("set_customer_birth_date", { p_birth_date: payload.birthDate })
       : Promise.resolve({ error: null }),
+    supabase.from("customer_companion_preferences").upsert({user_id:user.id,name:payload.companion.name.trim().slice(0,18)||"Dev",tone:payload.companion.tone,theme:payload.companion.theme,color:payload.companion.color,size:payload.companion.size,enabled:payload.companion.enabled,roaming_enabled:payload.companion.roamingEnabled,game_invites_enabled:payload.companion.gameInvitesEnabled,onboarding_completed:true,updated_at:new Date().toISOString()},{onConflict:"user_id"}),
   ]);
 
   if (profileResult.error) return { success: false, message: profileResult.error.message };
+  if (companionResult.error) return { success: false, message: companionResult.error.message.includes("customer_companion_preferences") ? "شغّلي ملف devplay_companion_preferences.sql في Supabase أولًا." : companionResult.error.message };
   if (birthDateResult.error) {
     const error = birthDateResult.error.message.toLowerCase();
     return { success: false, message: error.includes("birth date is locked")
