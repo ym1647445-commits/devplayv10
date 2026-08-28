@@ -266,6 +266,10 @@ function translatePricingError(
     return "طريقة التسعير غير صحيحة.";
   }
 
+  if (normalized.includes("could not find the function") || normalized.includes("pgrst202")) {
+    return "دالة حفظ التسعير غير مثبتة بعد. شغّلي ملف pricing_manual_override_safe_v2.sql كاملًا في Supabase SQL Editor ثم أعيدي المحاولة.";
+  }
+
   return message;
 }
 
@@ -276,6 +280,12 @@ function revalidatePricingPages(): void {
 
   revalidatePath("/");
   revalidatePath("/products");
+  revalidatePath("/products/[slug]", "page");
+  revalidatePath("/categories/[slug]", "page");
+  revalidatePath("/search");
+  revalidatePath("/offers");
+  revalidatePath("/games-topup");
+  revalidatePath("/gift-cards-egypt");
 
   revalidatePath("/wallet");
   revalidatePath("/wallet/deposit");
@@ -307,7 +317,7 @@ export async function updateAdminPricing(
       data,
       error,
     } = await supabase.rpc(
-      "admin_update_platform_pricing",
+      "admin_update_platform_pricing_v2",
       {
         p_usd_to_egp_rate:
           input.usdToEgpRate,
@@ -368,13 +378,13 @@ export async function updateAdminPricing(
       rawResult as PricingRpcResult;
 
     const { error: repriceError } = await supabase.rpc(
-      "admin_reprice_provider_offers",
+      "admin_reprice_provider_offers_v2",
     );
 
     if (repriceError) {
       return {
         success: false,
-        message: "تم حفظ الإعدادات، لكن تعذر إعادة تسعير الباقات الحالية. شغّلي ملف pricing_per_supplier_usd.sql ثم احفظي مرة أخرى.",
+        message: "تم حفظ الإعدادات، لكن تعذر إعادة تسعير الباقات الحالية. شغّلي ملف pricing_manual_override_safe_v2.sql ثم احفظي مرة أخرى.",
       };
     }
 
@@ -457,12 +467,13 @@ export async function updateAdminPricing(
     return {
       success: false,
 
-      message:
+      message: translatePricingError(
         error instanceof Error
-          ? translatePricingError(
-              error.message,
-            )
-          : "تعذر حفظ إعدادات التسعير.",
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String(error.message)
+            : "تعذر حفظ إعدادات التسعير.",
+      ),
     };
   }
 }

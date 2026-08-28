@@ -33,19 +33,19 @@ export function Item4GamerOrderControls() {
         <div>
           <small>ITEM4GAMER LIVE CONTROL</small>
           <strong>إرسال ومتابعة طلبات المورد</strong>
-          <p>الأزرار آمنة ضد تكرار الإرسال والاسترداد، والـWorker يعمل تلقائيًا كل 5 دقائق.</p>
+          <p>الإرسال والمتابعة والاسترداد ينفذها Worker الـVPS ذو الـIP الثابت تلقائيًا كل 5 ثوانٍ.</p>
         </div>
       </div>
 
       <div className={styles.actions}>
         <button disabled={pending} onClick={() => run(sendItem4GamerPendingNow)}>
-          <Send size={16} /> إرسال المعلق الآن
+          <Send size={16} /> فحص انتظار الإرسال
         </button>
         <button disabled={pending} onClick={() => run(refreshItem4GamerOrdersNow)}>
-          <RefreshCw className={pending ? styles.spin : undefined} size={16} /> تحديث الحالات
+          <RefreshCw className={pending ? styles.spin : undefined} size={16} /> فحص الحالات
         </button>
         <button className={styles.primary} disabled={pending} onClick={() => run(runItem4GamerFullCycle)}>
-          <ShieldCheck size={16} /> تشغيل دورة كاملة
+          <ShieldCheck size={16} /> فحص الدورة كاملة
         </button>
       </div>
 

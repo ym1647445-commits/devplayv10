@@ -34,6 +34,8 @@ interface StoreOfferRow {
     | number
     | string;
 
+  manual_selling_price_usd: number | string | null;
+
   old_price_usd:
     | number
     | string
@@ -186,6 +188,7 @@ export default async function ProductPage({
           name_en,
           supplier_price_usd,
           profit_usd,
+          manual_selling_price_usd,
           old_price_usd,
           stock,
           available,
@@ -364,13 +367,13 @@ export default async function ProductPage({
                     offer.profit_usd,
                   ),
 
+                manualSellingPriceUsd:
+                  offer.manual_selling_price_usd === null ? null : Number(offer.manual_selling_price_usd),
+
                 finalPriceUsd:
-                  Number(
-                    offer.supplier_price_usd,
-                  ) +
-                  Number(
-                    offer.profit_usd,
-                  ),
+                  offer.manual_selling_price_usd === null
+                    ? Number(offer.supplier_price_usd) + Number(offer.profit_usd)
+                    : Number(offer.manual_selling_price_usd),
 
                 oldPriceUsd:
                   offer.old_price_usd ===

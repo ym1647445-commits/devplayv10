@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { CouponValidationResult } from "@/types/coupon";
+import { getEffectiveOfferPriceUsd, isOfferPriceSafe } from "@/lib/offerPricing";
 
 interface CartItemPayload { productId: string; offerId: string; quantity: number }
 interface CouponPayload { code: string; items: CartItemPayload[] }
@@ -14,7 +15,7 @@ interface CouponRow {
   starts_at:string; expires_at:string|null; active:boolean;
 }
 interface ProductRow { id:string; category_id:string|null; active:boolean; status:string; minimum_quantity:number; maximum_quantity:number }
-interface OfferRow { id:string; product_id:string; supplier_price_usd:number|string; profit_usd:number|string; stock:number|null; available:boolean; active:boolean }
+interface OfferRow { id:string; product_id:string; supplier_price_usd:number|string; profit_usd:number|string; manual_selling_price_usd:number|string|null; stock:number|null; available:boolean; active:boolean }
 
 const money = (value:number) => Math.round((value + Number.EPSILON) * 100_000_000) / 100_000_000;
 const fail = (message:string):CouponValidationResult => ({success:false,message,coupon:null});
@@ -69,7 +70,7 @@ export async function validateCartCoupon(payload:CouponPayload):Promise<CouponVa
     if (productIds.some(id=>!id) || offerIds.some(id=>!id)) return fail("بيانات إحدى الباقات غير مكتملة. احذفيها من السلة وأضيفيها مجددًا.");
     const [productsResult,offersResult] = await Promise.all([
       supabase.from("store_products").select("id,category_id,active,status,minimum_quantity,maximum_quantity").in("id",productIds).returns<ProductRow[]>(),
-      supabase.from("store_product_offers").select("id,product_id,supplier_price_usd,profit_usd,stock,available,active").in("id",offerIds).returns<OfferRow[]>(),
+      supabase.from("store_product_offers").select("id,product_id,supplier_price_usd,profit_usd,manual_selling_price_usd,stock,available,active").in("id",offerIds).returns<OfferRow[]>(),
     ]);
     if (productsResult.error || offersResult.error) return fail("تعذر التحقق من باقات السلة.");
     const products = new Map((productsResult.data??[]).map(row=>[row.id,row]));
@@ -89,9 +90,9 @@ export async function validateCartCoupon(payload:CouponPayload):Promise<CouponVa
       const product=products.get(item.productId), offer=offers.get(item.offerId), quantity=Math.floor(Number(item.quantity));
       if (!product || !offer || offer.product_id!==product.id || !product.active || product.status==="unavailable" || !offer.active || !offer.available) return fail("إحدى الباقات غير متاحة حاليًا.");
       if (!Number.isFinite(quantity) || quantity<product.minimum_quantity || quantity>product.maximum_quantity || (offer.stock!==null && offer.stock<quantity)) return fail("كمية إحدى الباقات غير صحيحة أو غير متوفرة.");
-      const cost=Number(offer.supplier_price_usd), profit=Number(offer.profit_usd);
-      if (!Number.isFinite(cost)||!Number.isFinite(profit)||cost<0||profit<0||cost+profit<=0) return fail("سعر إحدى الباقات غير صالح.");
-      const itemTotal=(cost+profit)*quantity; subtotal+=itemTotal; costTotal+=cost*quantity;
+      const cost=Number(offer.supplier_price_usd), price=getEffectiveOfferPriceUsd(offer);
+      if (!isOfferPriceSafe(offer)||price<=0) return fail("سعر إحدى الباقات غير صالح أو أقل من تكلفة المورد.");
+      const itemTotal=price*quantity; subtotal+=itemTotal; costTotal+=cost*quantity;
       const eligible=coupon.application_scope==="cart"||allowedProducts.has(product.id)||(Boolean(product.category_id)&&allowedCategories.has(product.category_id!));
       if(eligible) eligibleSubtotal+=itemTotal;
     }

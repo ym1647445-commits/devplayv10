@@ -165,6 +165,7 @@ export function DepositsClient({
       )}
 
       <DepositDrawer
+        key={selectedDeposit?.id ?? "closed"}
         deposit={selectedDeposit}
         onClose={() =>
           setSelectedDeposit(null)

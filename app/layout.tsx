@@ -4,6 +4,7 @@ import { VisualAssistant } from "@/components/assistant/VisualAssistant";
 import { PlatformStatusGate } from "@/components/maintenance/PlatformStatusGate";
 import { OrganizationJsonLd } from "@/components/seo/OrganizationJsonLd";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { createClient } from "@/lib/supabase/server";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { PWAClient } from "@/components/pwa/PWAClient";
 import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/seo/site";

@@ -20,6 +20,7 @@ interface UpdateProductOfferInput {
   nameEn?: string | null;
 
   profitUsd: number;
+  manualSellingPriceUsd: number | null;
 
   oldPriceUsd?:
     | number
@@ -236,6 +237,9 @@ export async function updateProductOffer(
       };
     }
 
+    if (input.manualSellingPriceUsd !== null && (!Number.isFinite(input.manualSellingPriceUsd) || input.manualSellingPriceUsd < 0)) {
+      return { success: false, message: "سعر البيع اليدوي غير صحيح." };
+    }
     if (
       input.oldPriceUsd !==
         null &&
@@ -287,6 +291,17 @@ export async function updateProductOffer(
       adminId,
     } =
       await requireAdmin();
+    const { data: currentOffer, error: currentOfferError } = await supabase
+      .from("store_product_offers")
+      .select("supplier_price_usd")
+      .eq("id", input.offerId)
+      .eq("product_id", input.productId)
+      .single<{ supplier_price_usd: number | string }>();
+    if (currentOfferError || !currentOffer) return { success: false, message: currentOfferError?.message ?? "الباقة غير موجودة." };
+    const supplierCost = Number(currentOffer.supplier_price_usd);
+    if (input.manualSellingPriceUsd !== null && input.manualSellingPriceUsd < supplierCost) {
+      return { success: false, message: `سعر البيع اليدوي لا يمكن أن يقل عن تكلفة المورد (${supplierCost.toFixed(4)}$).` };
+    }
 
     const {
       data: offer,
@@ -308,6 +323,8 @@ export async function updateProductOffer(
           Number(
             input.profitUsd,
           ),
+
+        manual_selling_price_usd: input.manualSellingPriceUsd,
 
         old_price_usd:
           input.oldPriceUsd ??
@@ -402,6 +419,15 @@ export async function updateProductOffer(
     revalidatePath(
       "/products",
     );
+
+    revalidatePath(
+      "/products/[slug]",
+      "page",
+    );
+
+    revalidatePath("/categories/[slug]", "page");
+    revalidatePath("/search");
+    revalidatePath("/offers");
 
     revalidatePath(
       "/",

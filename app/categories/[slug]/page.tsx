@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import styles from "../categories.module.css";
 
 interface CategoryRow { id: string; slug: string; name_ar: string; name_en: string | null; description_ar: string | null; image_url: string | null; }
-interface OfferRow { id: string; supplier_price_usd: number | string; profit_usd: number | string; active: boolean; available: boolean; stock: number | null; }
+interface OfferRow { id: string; supplier_price_usd: number | string; profit_usd: number | string; manual_selling_price_usd: number | string | null; active: boolean; available: boolean; stock: number | null; }
 interface ProductRow { id: string; slug: string; name_ar: string; name_en: string | null; short_description_ar: string | null; image_url: string | null; featured: boolean; instant_delivery: boolean; delivery_time: string | null; badge: string | null; active: boolean; category_id: string | null; category: CategoryRow | CategoryRow[] | null; store_product_offers: OfferRow[]; }
 
 function relation<T>(value: T | T[] | null): T | null { return Array.isArray(value) ? value[0] ?? null : value; }
@@ -27,7 +27,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
 
   let productsQuery = supabase.from("store_products").select(`id, slug, name_ar, name_en, short_description_ar, image_url, featured, instant_delivery, delivery_time, badge, active, category_id,
     category:store_categories(id, slug, name_ar, name_en, description_ar, image_url),
-    store_product_offers(id, supplier_price_usd, profit_usd, active, available, stock)`)
+    store_product_offers(id, supplier_price_usd, profit_usd, manual_selling_price_usd, active, available, stock)`)
     .eq("active", true).neq("status", "unavailable").order("featured", { ascending: false }).order("created_at", { ascending: false });
   if (category) productsQuery = productsQuery.eq("category_id", category.id);
   const { data, error } = await productsQuery.returns<ProductRow[]>();
@@ -35,7 +35,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
   const rate = Number(settingsResult.data?.usd_to_egp_rate ?? 57);
   const products = (data ?? []).map((product) => {
     const offers = (product.store_product_offers ?? []).filter((offer) => offer.active && offer.available && (offer.stock === null || offer.stock > 0));
-    const prices = offers.map((offer) => Number(offer.supplier_price_usd) + Number(offer.profit_usd));
+    const prices = offers.map((offer) => offer.manual_selling_price_usd === null ? Number(offer.supplier_price_usd) + Number(offer.profit_usd) : Number(offer.manual_selling_price_usd));
     return { ...product, category: relation(product.category), offers, lowest: prices.length ? Math.min(...prices) : null };
   }).filter((product) => !search || [product.name_ar, product.name_en ?? "", product.short_description_ar ?? ""].join(" ").toLowerCase().includes(search));
   const title = category?.name_ar ?? "شحن الألعاب";

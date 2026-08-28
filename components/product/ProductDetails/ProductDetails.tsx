@@ -47,6 +47,7 @@ interface ProductOffer {
 
   supplierPriceUsd: number;
   profitUsd: number;
+  manualSellingPriceUsd: number | null;
 
   finalPriceUsd: number;
 
@@ -273,8 +274,9 @@ export function ProductDetails({
             ?.supplierPriceUsd ??
           0,
 
+        manualSellingPriceUsd: offer?.manualSellingPriceUsd ?? null,
         costPrice: offer?.supplierPriceUsd ?? 0,
-        price: offer ? offer.supplierPriceUsd + offer.profitUsd : 0,
+        price: offer?.finalPriceUsd ?? 0,
         currency: "USD",
         fallbackUsdRate: product.usdToEgpRate,
 

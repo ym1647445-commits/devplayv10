@@ -211,9 +211,9 @@ export function PricingManager({
       form.usdToEgpRate,
     );
 
-  const fixedProfit =
+  const profitPerSupplierUsdEgp =
     safeNumber(
-      form.defaultProfitUsd,
+      form.profitPerUsdEgp,
     );
 
   const markupPercentage =
@@ -235,7 +235,9 @@ export function PricingManager({
         form.apiPricingMode ===
         "fixed_usd"
       ) {
-        return fixedProfit;
+        return usdRate > 0
+          ? supplierPrice * profitPerSupplierUsdEgp / usdRate
+          : 0;
       }
 
       if (
@@ -254,8 +256,9 @@ export function PricingManager({
       return 0;
     }, [
       form.apiPricingMode,
-      fixedProfit,
+      profitPerSupplierUsdEgp,
       markupPercentage,
+      usdRate,
       supplierPrice,
     ]);
 

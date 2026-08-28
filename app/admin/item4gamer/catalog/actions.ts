@@ -42,13 +42,20 @@ function requiredFields(raw: Record<string, unknown>) {
   }).filter((field) => field.id);
 }
 
-async function profitFor(supabase: Awaited<ReturnType<typeof createClient>>, cost: number) {
-  const { data } = await supabase.from("platform_settings").select("api_pricing_mode,default_profit_usd,default_markup_percentage,usd_to_egp_rate,profit_per_usd_egp").eq("id", 1).maybeSingle<Record<string, number | string | null>>();
-  if (data?.api_pricing_mode === "percentage") return Math.max(0, cost * Number(data.default_markup_percentage ?? 0) / 100);
-  if (data?.api_pricing_mode === "manual") return 0;
-  const rate = Number(data?.usd_to_egp_rate ?? 0);
-  const perDollar = Number(data?.profit_per_usd_egp ?? 0);
-  return Math.max(0, rate > 0 ? cost * perDollar / rate : Number(data?.default_profit_usd ?? 0.2));
+interface PricingSettings {
+  api_pricing_mode: string | null;
+  default_profit_usd: number | string | null;
+  default_markup_percentage: number | string | null;
+  usd_to_egp_rate: number | string | null;
+  profit_per_usd_egp: number | string | null;
+}
+
+function profitFor(settings: PricingSettings | null, cost: number) {
+  if (settings?.api_pricing_mode === "percentage") return Math.max(0, cost * Number(settings.default_markup_percentage ?? 0) / 100);
+  if (settings?.api_pricing_mode === "manual") return 0;
+  const rate = Number(settings?.usd_to_egp_rate ?? 0);
+  const perDollar = Number(settings?.profit_per_usd_egp ?? 0);
+  return Math.max(0, rate > 0 ? cost * perDollar / rate : Number(settings?.default_profit_usd ?? 0.2));
 }
 
 export async function importAllItem4GamerOffers(categoryRowId: string) {
@@ -71,10 +78,18 @@ export async function importAllItem4GamerOffers(categoryRowId: string) {
       storeCategory = created.data;
     }
 
-    let { data: product } = await supabase.from("store_products").select("id").eq("slug", productSlug).maybeSingle<{ id: string }>();
+    const externalId = `item4gamer:${category.catalog_type}:${category.provider_category_id}`;
+    const productLookup = await supabase.from("store_products").select("id,provider_data").eq("external_id", externalId).maybeSingle<{ id: string; provider_data: Record<string, unknown> | null }>();
+    if (productLookup.error) throw productLookup.error;
+    let product = productLookup.data;
+    if (!product) {
+      const bySlug = await supabase.from("store_products").select("id,provider_data").eq("slug", productSlug).maybeSingle<{ id: string; provider_data: Record<string, unknown> | null }>();
+      if (bySlug.error) throw bySlug.error;
+      product = bySlug.data;
+    }
     if (!product) {
       const created = await supabase.from("store_products").insert({
-        external_id: `item4gamer:${category.catalog_type}:${category.provider_category_id}`,
+        external_id: externalId,
         supplier_product_id: category.provider_category_id,
         category_id: storeCategory.id,
         slug: productSlug,
@@ -85,18 +100,35 @@ export async function importAllItem4GamerOffers(categoryRowId: string) {
         supplier_price_usd: 0, profit_usd: 0, minimum_quantity: 1, maximum_quantity: 1,
         required_fields: [], status: "available", active: true, featured: false, instant_delivery: true,
         provider_data: { provider: "item4gamer", provider_product_id: category.provider_category_id, catalog_type: category.catalog_type, product_type: "provider_group" },
-      }).select("id").single<{ id: string }>();
+      }).select("id,provider_data").single<{ id: string; provider_data: Record<string, unknown> | null }>();
       if (created.error || !created.data) throw created.error ?? new Error("تعذر إنشاء المنتج الرئيسي.");
       product = created.data;
+    } else {
+      const { error: linkProductError } = await supabase.from("store_products").update({
+        external_id: externalId,
+        supplier_product_id: category.provider_category_id,
+        provider_data: {
+          ...(product.provider_data ?? {}),
+          provider: "item4gamer",
+          provider_product_id: category.provider_category_id,
+          provider_category_id: category.provider_category_id,
+          catalog_type: category.catalog_type,
+          product_type: "provider_group",
+        },
+        updated_at: new Date().toISOString(),
+      }).eq("id", product.id);
+      if (linkProductError) throw linkProductError;
     }
 
     const { data: provider } = await supabase.from("providers").select("id").eq("code", "item4gamer").single<{ id: string }>();
     if (!provider) throw new Error("إعداد Item4Gamer غير موجود في جدول providers.");
+    const { data: pricingSettings, error: pricingError } = await supabase.from("platform_settings").select("api_pricing_mode,default_profit_usd,default_markup_percentage,usd_to_egp_rate,profit_per_usd_egp").eq("id", 1).maybeSingle<PricingSettings>();
+    if (pricingError) throw pricingError;
     let importedCount = 0;
     for (const offer of offers) {
       const cost = Number(offer.price);
       if (!Number.isFinite(cost) || cost < 0) continue;
-      const profit = await profitFor(supabase, cost);
+      const profit = profitFor(pricingSettings, cost);
       const fields = requiredFields(offer.raw_data ?? {});
       const payload = {
         product_id: product.id, provider_name: "item4gamer", provider_id: provider.id,
@@ -115,7 +147,8 @@ export async function importAllItem4GamerOffers(categoryRowId: string) {
         ? await supabase.from("store_product_offers").update(payload).eq("id", existing.id)
         : await supabase.from("store_product_offers").insert(payload);
       if (error) throw error;
-      await supabase.from("provider_offers").update({ imported_to_store: true, updated_at: new Date().toISOString() }).eq("id", offer.id);
+      const { error: markerError } = await supabase.from("provider_offers").update({ imported_to_store: true, updated_at: new Date().toISOString() }).eq("id", offer.id);
+      if (markerError) throw markerError;
       importedCount += 1;
     }
     await supabase.from("activity_logs").insert({ actor_id: adminId, action: "item4gamer_product_imported", entity_type: "store_product", entity_id: product.id, description: `Imported all Item4Gamer offers for ${productName}`, new_data: { provider_product_id: category.provider_category_id, imported_count: importedCount } });

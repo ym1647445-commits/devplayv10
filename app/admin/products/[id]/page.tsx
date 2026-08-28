@@ -48,6 +48,8 @@ interface ProductOfferRow {
     | number
     | string;
 
+  manual_selling_price_usd: number | string | null;
+
   old_price_usd:
     | number
     | string
@@ -222,6 +224,7 @@ export default async function AdminProductDetailsPage({
         name_en,
         supplier_price_usd,
         profit_usd,
+        manual_selling_price_usd,
         old_price_usd,
         stock,
         available,
@@ -1075,9 +1078,9 @@ export default async function AdminProductDetailsPage({
                       .profit_usd,
                   );
 
-                const finalPrice =
-                  supplierPrice +
-                  profit;
+                const manualSellingPrice = offer.manual_selling_price_usd === null ? null : Number(offer.manual_selling_price_usd);
+
+                const finalPrice = manualSellingPrice ?? (supplierPrice + profit);
 
                 return (
                   <article
@@ -1346,6 +1349,9 @@ export default async function AdminProductDetailsPage({
 
                         profitUsd:
                           profit,
+
+                        manualSellingPriceUsd:
+                          manualSellingPrice,
 
                         oldPriceUsd:
                           offer

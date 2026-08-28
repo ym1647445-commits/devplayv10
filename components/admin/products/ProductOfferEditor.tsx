@@ -39,6 +39,7 @@ interface ProductOfferEditorProps {
 
     supplierPriceUsd: number;
     profitUsd: number;
+    manualSellingPriceUsd: number | null;
 
     oldPriceUsd:
       | number
@@ -131,6 +132,10 @@ export function ProductOfferEditor({
     ),
   );
 
+  const [manualSellingPriceUsd, setManualSellingPriceUsd] = useState(
+    offer.manualSellingPriceUsd === null ? "" : String(offer.manualSellingPriceUsd),
+  );
+
   const [
     oldPriceUsd,
     setOldPriceUsd,
@@ -201,13 +206,9 @@ export function ProductOfferEditor({
     setSuccess,
   ] = useState(false);
 
-  const finalPrice =
-    offer.supplierPriceUsd +
-    (
-      Number(
-        profitUsd,
-      ) || 0
-    );
+  const finalPrice = manualSellingPriceUsd.trim()
+    ? Number(manualSellingPriceUsd)
+    : offer.supplierPriceUsd + (Number(profitUsd) || 0);
 
   function addField() {
     setRequiredFields(
@@ -286,6 +287,8 @@ export function ProductOfferEditor({
               Number(
                 profitUsd,
               ),
+
+            manualSellingPriceUsd: manualSellingPriceUsd.trim() ? Number(manualSellingPriceUsd) : null,
 
             oldPriceUsd:
               oldPriceUsd.trim()
@@ -895,6 +898,11 @@ export function ProductOfferEditor({
                 </div>
               </section>
 
+                <label style={{display:"grid",gap:5,fontSize:7}}>
+                  <span>سعر البيع اليدوي $ (اختياري)</span>
+                  <input type="number" min={offer.supplierPriceUsd} step="0.0001" value={manualSellingPriceUsd} onChange={(event)=>setManualSellingPriceUsd(event.target.value)} placeholder={`تلقائي: ${formatUsd(offer.supplierPriceUsd + (Number(profitUsd)||0))}`}/>
+                  <small style={{color:"var(--muted)"}}>اتركيه فارغًا لاستخدام سعر المورد + الربح. لا يمكن أن يقل عن تكلفة المورد.</small>
+                </label>
               <section
                 style={{
                   display:

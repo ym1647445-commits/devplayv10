@@ -16,6 +16,7 @@ import {
   createClient,
 } from "@/lib/supabase/server";
 import { assertOperationEnabled } from "@/lib/platform-status";
+import { getEffectiveOfferPriceUsd, isOfferPriceSafe } from "@/lib/offerPricing";
 
 import type {
   CheckoutActionResult,
@@ -55,6 +56,8 @@ interface StoreOfferReference {
   profit_usd:
     | number
     | string;
+
+  manual_selling_price_usd: number | string | null;
 
   stock:
     | number
@@ -597,39 +600,10 @@ export async function createCheckoutOrder(
             );
           }
 
-          const supplierPrice =
-            Number(
-              offer
-                .supplier_price_usd,
-            );
+          const effectivePrice = getEffectiveOfferPriceUsd(offer);
 
-          const profit =
-            Number(
-              offer.profit_usd,
-            );
-
-          if (
-            !Number.isFinite(
-              supplierPrice,
-            ) ||
-            supplierPrice <
-              0
-          ) {
-            throw new Error(
-              `Invalid supplier price for ${offer.name_ar}`,
-            );
-          }
-
-          if (
-            !Number.isFinite(
-              profit,
-            ) ||
-            profit <
-              0
-          ) {
-            throw new Error(
-              `Invalid profit for ${offer.name_ar}`,
-            );
+          if (!isOfferPriceSafe(offer) || effectivePrice <= 0) {
+            throw new Error(`Unsafe selling price for ${offer.name_ar}`);
           }
 
           /*

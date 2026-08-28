@@ -399,10 +399,9 @@ export async function importProviderOfferToStore(
       offer.provider_category_id;
 
     const categorySlug =
-      slugify(
-        offer.provider_category_id,
-      ) ||
-      `category-${offer.id}`;
+      offer.provider_name === "item4gamer"
+        ? (offer.catalog_type === "gc" ? "gift-cards" : "games")
+        : slugify(offer.provider_category_id) || `category-${offer.id}`;
 
     /*
      * ==========================================
@@ -506,7 +505,9 @@ export async function importProviderOfferToStore(
       );
 
     const mainProductSlug =
-      categorySlug;
+      offer.provider_name === "item4gamer"
+        ? slugify(categoryName) || `item4gamer-${offer.provider_category_id}`
+        : categorySlug;
 
     let mainProductId:
       string;
@@ -647,7 +648,7 @@ export async function importProviderOfferToStore(
               mainExternalId,
 
             supplier_product_id:
-              null,
+              offer.provider_category_id,
 
             category_id:
               storeCategoryId,
@@ -725,6 +726,9 @@ export async function importProviderOfferToStore(
                 offer.catalog_type,
 
               provider_category_id:
+                offer.provider_category_id,
+
+              provider_product_id:
                 offer.provider_category_id,
 
               product_type:
@@ -876,6 +880,12 @@ export async function importProviderOfferToStore(
       provider_offer_id:
         providerOfferId,
 
+      provider_product_id:
+        offer.provider_category_id,
+
+      provider_variation_id:
+        providerOfferId,
+
       /*
        * المورد يرسل الاسم غالبًا
        * بالإنجليزي.
@@ -930,6 +940,9 @@ export async function importProviderOfferToStore(
         provider_category_id:
           offer.provider_category_id,
 
+        provider_product_id:
+          offer.provider_category_id,
+
         provider_offer_id:
           providerOfferId,
 
@@ -978,6 +991,12 @@ export async function importProviderOfferToStore(
             mainProductId,
 
           provider_offer_id:
+            providerOfferId,
+
+          provider_product_id:
+            offer.provider_category_id,
+
+          provider_variation_id:
             providerOfferId,
 
           name_en:
@@ -1131,6 +1150,12 @@ export async function importProviderOfferToStore(
             mainProductId,
 
           provider_offer_id:
+            providerOfferId,
+
+          provider_product_id:
+            offer.provider_category_id,
+
+          provider_variation_id:
             providerOfferId,
 
           provider_category_id:

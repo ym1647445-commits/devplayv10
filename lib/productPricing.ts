@@ -10,6 +10,10 @@ import type { Product } from "@/types/product";
 export function getProductPriceUsd(
   product: Product,
 ): number {
+  if (product.manualSellingPriceUsd !== undefined && product.manualSellingPriceUsd !== null) {
+    return roundCurrency(product.manualSellingPriceUsd);
+  }
+
   if (
     product.supplierPriceUsd !== undefined &&
     product.profitUsd !== undefined

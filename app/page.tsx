@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { CommunityPreview } from "@/components/home/CommunityPreview";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
@@ -64,7 +65,8 @@ function formatEgpBalance(
 
 export default function HomePage() {
   const gamesRailRef=useRef<HTMLDivElement>(null);
-  const [featuredProducts,setFeaturedProducts]=useState<Array<{id:string;slug:string;name_ar:string;image_url:string|null;short_description_ar:string|null;offers:Array<{supplier_price_usd:number|string;profit_usd:number|string}>}>>([]);
+  const [featuredProducts,setFeaturedProducts]=useState<Array<{id:string;slug:string;name_ar:string;image_url:string|null;short_description_ar:string|null;offers:Array<{supplier_price_usd:number|string;profit_usd:number|string;manual_selling_price_usd:number|string|null}>}>>([]);
+  const [productsLoaded,setProductsLoaded]=useState(false);
   const [lastViewed,setLastViewed]=useState<{slug:string;name:string;image:string;shortDescription:string}|null>(null);
   const {
     loading,
@@ -86,7 +88,7 @@ export default function HomePage() {
       ?.trim()
       .split(/\s+/)[0] ?? null;
 
-  useEffect(()=>{let active=true;void Promise.resolve().then(()=>{if(!active)return;try{const saved=localStorage.getItem("devplay-last-viewed-product");setLastViewed(saved?JSON.parse(saved) as {slug:string;name:string;image:string;shortDescription:string}:null)}catch{setLastViewed(null)}});const supabase=createClient();void supabase.from("store_products").select("id,slug,name_ar,image_url,short_description_ar,featured,store_product_offers(supplier_price_usd,profit_usd,active,available,stock)").eq("active",true).neq("status","unavailable").order("featured",{ascending:false}).order("created_at",{ascending:false}).limit(10).then(({data})=>{if(!active)return;setFeaturedProducts((data??[]).map(row=>({id:String(row.id),slug:String(row.slug),name_ar:String(row.name_ar),image_url:row.image_url as string|null,short_description_ar:row.short_description_ar as string|null,offers:((row.store_product_offers??[]) as Array<{supplier_price_usd:number|string;profit_usd:number|string;active:boolean;available:boolean;stock:number|null}>).filter(offer=>offer.active&&offer.available&&(offer.stock===null||offer.stock>0))})).filter(product=>product.offers.length>0))});return()=>{active=false}},[]);
+  useEffect(()=>{let active=true;void Promise.resolve().then(()=>{if(!active)return;try{const saved=localStorage.getItem("devplay-last-viewed-product");setLastViewed(saved?JSON.parse(saved) as {slug:string;name:string;image:string;shortDescription:string}:null)}catch{setLastViewed(null)}});const supabase=createClient();void supabase.from("store_products").select("id,slug,name_ar,image_url,short_description_ar,featured,store_product_offers(supplier_price_usd,profit_usd,manual_selling_price_usd,active,available,stock)").eq("active",true).neq("status","unavailable").order("featured",{ascending:false}).order("created_at",{ascending:false}).limit(10).then(({data})=>{if(!active)return;setFeaturedProducts((data??[]).map(row=>({id:String(row.id),slug:String(row.slug),name_ar:String(row.name_ar),image_url:row.image_url as string|null,short_description_ar:row.short_description_ar as string|null,offers:((row.store_product_offers??[]) as Array<{supplier_price_usd:number|string;profit_usd:number|string;manual_selling_price_usd:number|string|null;active:boolean;available:boolean;stock:number|null}>).filter(offer=>offer.active&&offer.available&&(offer.stock===null||offer.stock>0))})).filter(product=>product.offers.length>0));setProductsLoaded(true)},()=>{if(active)setProductsLoaded(true)});return()=>{active=false}},[]);
 
   return (
     <AppShell>
@@ -94,6 +96,7 @@ export default function HomePage() {
         <div className="home-usage-ticker" aria-label="طريقة استخدام DevPlay"><div>{["اختاري اللعبة والباقـة","أدخلي Player ID أو البريد بدقة","راجعي الطلب وادفعي من المحفظة","نتابع التنفيذ تلقائيًا مع المورد","الكود أو الشحن يظهر داخل طلباتك"].map((text,index)=><span key={text}><b>{index+1}</b>{text}<ArrowLeft size={13}/></span>)}</div></div>
         <section className="home-discovery-hero">
           <div className="home-hero-copy">
+            <span className="home-hero-status"><i /> PREMIUM GAMING HUB</span>
             <span className="welcome-label">{user ? `أهلًا ${firstName ?? "بيك"}` : "مرحبًا بك في DevPlay"}</span>
             <h1>كل شحناتك الرقمية في مكان واحد</h1>
             <p>اختاري اللعبة أو الخدمة، حددي الباقة المناسبة، وتابعي طلبك بسهولة من لحظة الدفع حتى التنفيذ.</p>
@@ -106,7 +109,8 @@ export default function HomePage() {
             </div>
           </div>
           <aside className="home-hero-wallet">
-            <div>
+            <div className="home-hero-companion" aria-hidden="true"><span className="home-companion-signal"/><span className="home-companion-face"><i/><i/><b/></span><span className="home-companion-body"><Gamepad2/></span></div>
+            <div className="home-wallet-copy">
               <span>رصيد محفظتك</span>
               {loading ? <strong>جاري التحميل...</strong> : user ? <><strong>{formatEgpBalance(balanceEgp)} ج.م</strong><small>≈ ${balanceUsd.toFixed(4)}</small></> : <><strong>ابدئي من هنا</strong><small>سجّلي الدخول لمشاهدة رصيدك وطلباتك</small></>}
             </div>
@@ -247,11 +251,17 @@ export default function HomePage() {
           </div>
 
           <div className="home-games-carousel"><button type="button" className="home-rail-button previous" aria-label="المنتجات السابقة" onClick={()=>gamesRailRef.current?.scrollBy({left:-420,behavior:"smooth"})}><ChevronRight/></button><div className="home-games-rail" ref={gamesRailRef} onWheel={event=>{if(Math.abs(event.deltaY)>Math.abs(event.deltaX)){event.preventDefault();event.currentTarget.scrollBy({left:event.deltaY,behavior:"smooth"})}}}>
-            {featuredProducts.map(product=>{const lowest=Math.min(...product.offers.map(offer=>Number(offer.supplier_price_usd)+Number(offer.profit_usd)));return <Link className="store-home-product" href={`/products/${product.slug}`} key={product.id}>{product.image_url?<img src={product.image_url} alt={product.name_ar}/>:<span><Gamepad2/></span>}<strong>{product.name_ar}</strong><small>{product.short_description_ar??`${product.offers.length} باقة متاحة`}</small><b>يبدأ من ${lowest.toFixed(2)}</b></Link>})}
+            {!productsLoaded
+              ? Array.from({length:4},(_,index)=><span className="home-product-skeleton" aria-hidden="true" key={index}/>)
+              : featuredProducts.length
+                ? featuredProducts.map(product=>{const lowest=Math.min(...product.offers.map(offer=>offer.manual_selling_price_usd===null?Number(offer.supplier_price_usd)+Number(offer.profit_usd):Number(offer.manual_selling_price_usd)));return <Link className="store-home-product" href={`/products/${product.slug}`} key={product.id}>{product.image_url?<img src={product.image_url} alt={product.name_ar}/>:<span><Gamepad2/></span>}<strong>{product.name_ar}</strong><small>{product.short_description_ar??`${product.offers.length} باقة متاحة`}</small><b>يبدأ من ${lowest.toFixed(2)}</b></Link>})
+                : <div className="home-products-empty"><span><Gamepad2/></span><div><strong>نعِدّ لك اختيارات جديدة</strong><p>لا توجد منتجات مميزة متاحة الآن. يمكنك تصفح كل المنتجات والأقسام.</p></div><Link href="/products">استكشفي المنتجات <ArrowLeft/></Link></div>}
           </div><button type="button" className="home-rail-button next" aria-label="المنتجات التالية" onClick={()=>gamesRailRef.current?.scrollBy({left:420,behavior:"smooth"})}><ChevronLeft/></button></div>
         </section>
 
         {lastViewed&&<section><div className="section-title-row"><div><h2>آخر منتج شاهدتيه</h2><span className="section-subtitle">ارجعي له بسرعة وكمّلي طلبك</span></div></div><Link className="last-viewed-product" href={`/products/${lastViewed.slug}`}>{lastViewed.image?<img src={lastViewed.image} alt={lastViewed.name}/>:<span><Gamepad2/></span>}<div><small>CONTINUE EXPLORING</small><strong>{lastViewed.name}</strong><p>{lastViewed.shortDescription||"افتحي المنتج واختاري الباقة المناسبة."}</p></div><ArrowLeft/></Link></section>}
+
+        <CommunityPreview />
 
         <section className="home-trust-strip">{[{icon:Zap,title:"تنفيذ سريع",text:"ربط مباشر مع المورد ومتابعة حالة الطلب."},{icon:ShieldCheck,title:"محفظة آمنة",text:"السعر والخصم والرصيد يتم التحقق منها على السيرفر."},{icon:Headphones,title:"دعم حقيقي",text:"فريق DevPlay يتابع معك أي مشكلة حتى الحل."}].map(item=>{const Icon=item.icon;return <article key={item.title}><Icon/><div><strong>{item.title}</strong><p>{item.text}</p></div></article>})}</section>
 

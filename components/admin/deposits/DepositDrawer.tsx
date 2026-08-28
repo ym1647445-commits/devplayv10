@@ -69,12 +69,12 @@ export function DepositDrawer({
     useState<ActionMode>(null);
 
   const [adminNote, setAdminNote] =
-    useState("");
+    useState(deposit?.admin_note ?? "");
 
   const [
     rejectionReason,
     setRejectionReason,
-  ] = useState("");
+  ] = useState(deposit?.rejection_reason ?? "");
 
   const [loading, setLoading] =
     useState(false);
@@ -86,15 +86,6 @@ export function DepositDrawer({
     if (!deposit) {
       return;
     }
-
-    setMode(null);
-    setMessage(null);
-    setAdminNote(
-      deposit.admin_note ?? "",
-    );
-    setRejectionReason(
-      deposit.rejection_reason ?? "",
-    );
 
     document.body.style.overflow =
       "hidden";

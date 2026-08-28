@@ -40,6 +40,7 @@ export interface Product {
    */
   supplierPriceUsd?: number;
   profitUsd?: number;
+  manualSellingPriceUsd?: number | null;
   priceUsd?: number;
   oldPriceUsd?: number;
 

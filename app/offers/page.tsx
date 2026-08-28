@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 interface CategoryRow { id: string; slug: string; name_ar: string; }
 interface ProductRow { id: string; slug: string; name_ar: string; image_url: string | null; badge: string | null; featured: boolean; instant_delivery: boolean; delivery_time: string | null; category: CategoryRow | CategoryRow[] | null; }
-interface OfferRow { id: string; name_ar: string; supplier_price_usd: number | string; profit_usd: number | string; old_price_usd: number | string | null; stock: number | null; product: ProductRow | ProductRow[] | null; }
+interface OfferRow { id: string; name_ar: string; supplier_price_usd: number | string; profit_usd: number | string; manual_selling_price_usd: number | string | null; old_price_usd: number | string | null; stock: number | null; product: ProductRow | ProductRow[] | null; }
 function one<T>(value:T|T[]|null):T|null{return Array.isArray(value)?value[0]??null:value}
 function money(value:number,rate:number){return `${(value*rate).toLocaleString("ar-EG",{maximumFractionDigits:2})} ج.م`}
 
@@ -14,7 +14,7 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
   const params = await searchParams;
   const supabase = await createClient();
   const [offersResult, categoriesResult, settingsResult] = await Promise.all([
-    supabase.from("store_product_offers").select(`id, name_ar, supplier_price_usd, profit_usd, old_price_usd, stock,
+    supabase.from("store_product_offers").select(`id, name_ar, supplier_price_usd, profit_usd, manual_selling_price_usd, old_price_usd, stock,
       product:store_products!inner(id, slug, name_ar, image_url, badge, featured, instant_delivery, delivery_time, active,
         category:store_categories(id, slug, name_ar))`)
       .eq("active",true).eq("available",true).eq("product.active",true).order("sort_order",{ascending:true}).returns<OfferRow[]>(),
@@ -26,7 +26,7 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
   const categorySlug = params.category ?? "all";
   const normalized = (offersResult.data ?? []).map((offer)=>{
     const product=one(offer.product); const category=product?one(product.category):null;
-    const price=Number(offer.supplier_price_usd)+Number(offer.profit_usd); const old=offer.old_price_usd===null?null:Number(offer.old_price_usd);
+    const price=offer.manual_selling_price_usd===null?Number(offer.supplier_price_usd)+Number(offer.profit_usd):Number(offer.manual_selling_price_usd); const old=offer.old_price_usd===null?null:Number(offer.old_price_usd);
     const discount=old!==null&&old>price?Math.round(((old-price)/old)*100):0;
     return {...offer,product,category,price,old,discount};
   }).filter((offer)=>offer.product && (offer.stock===null||offer.stock>0))
