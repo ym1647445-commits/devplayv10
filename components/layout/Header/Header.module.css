@@ -30,44 +30,34 @@
   min-width: 0;
 }
 
-.logo {
-  display: grid;
-  flex: 0 0 auto;
-
-  width: 36px;
-  height: 36px;
-  place-items: center;
-
-  border-radius: 11px;
-
-  background: linear-gradient(
-    135deg,
-    var(--primary),
-    var(--secondary)
-  );
-
-  color: #ffffff;
-  box-shadow: 0 8px 22px var(--primary-soft);
-
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.brandText {
-  display: none;
-  flex-direction: column;
+.signature {
+  position: relative;
+  display: inline-block;
+  padding: 1px 5px 4px;
+  background: linear-gradient(120deg, var(--primary), var(--secondary));
+  background-clip: text;
+  color: transparent;
+  font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive;
+  font-size: clamp(24px, 6vw, 31px);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -1.5px;
   line-height: 1;
+  text-shadow: 0 7px 20px var(--primary-soft);
+  transform: rotate(-3deg);
 }
 
-.brandText strong {
-  font-size: 13px;
-}
-
-.brandText small {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 7px;
-  letter-spacing: 2px;
+.signature::after {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  width: 72%;
+  height: 1.5px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, transparent, var(--primary), var(--secondary));
+  content: "";
+  transform: rotate(-2deg);
+  transform-origin: right center;
 }
 
 .actions {
@@ -443,12 +433,6 @@
 
 @media (min-width: 390px) {
   .accountCopy {
-    display: flex;
-  }
-}
-
-@media (min-width: 460px) {
-  .brandText {
     display: flex;
   }
 }

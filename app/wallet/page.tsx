@@ -9,12 +9,12 @@ import {
   ScanLine,
   RefreshCw,
   ShieldCheck,
-  WalletCards,
 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { WalletCard } from "@/components/wallet/WalletCard";
 import { createClient } from "@/lib/supabase/server";
 
 interface UnifiedWallet {
@@ -34,6 +34,10 @@ interface UnifiedWallet {
   updated_at: string;
 }
 
+interface WalletProfile {
+  customer_id: string;
+  full_name: string | null;
+}
 function formatEgp(value: number): string {
   return `${Number(value).toLocaleString("ar-EG", {
     minimumFractionDigits: 2,
@@ -57,25 +61,32 @@ export default async function WalletPage() {
     redirect("/auth");
   }
 
-  const {
-    data: wallet,
-    error: walletError,
-  } = await supabase
-    .from("account_wallet_balances")
-    .select(`
-      id,
-      user_id,
-      balance_usd,
-      balance_egp,
-      frozen_balance_usd,
-      frozen_balance_egp,
-      usd_to_egp_rate,
-      is_frozen,
-      freeze_reason,
-      updated_at
-    `)
-    .eq("user_id", user.id)
-    .maybeSingle<UnifiedWallet>();
+  const [walletResult, profileResult] = await Promise.all([
+    supabase
+      .from("account_wallet_balances")
+      .select(`
+        id,
+        user_id,
+        balance_usd,
+        balance_egp,
+        frozen_balance_usd,
+        frozen_balance_egp,
+        usd_to_egp_rate,
+        is_frozen,
+        freeze_reason,
+        updated_at
+      `)
+      .eq("user_id", user.id)
+      .maybeSingle<UnifiedWallet>(),
+    supabase
+      .from("profiles")
+      .select("customer_id, full_name")
+      .eq("id", user.id)
+      .maybeSingle<WalletProfile>(),
+  ]);
+
+  const { data: wallet, error: walletError } = walletResult;
+  const profile = profileResult.data;
 
   if (walletError || !wallet) {
     return (
@@ -157,32 +168,20 @@ export default async function WalletPage() {
           </section>
         )}
 
-        <section className="wallet-main-card">
-          <div className="wallet-main-top">
-            <span>
-              <WalletCards size={20} />
-              إجمالي الرصيد
-            </span>
+        <WalletCard
+          balanceEgp={balanceEgp}
+          balanceUsd={balanceUsd}
+          customerId={profile?.customer_id ?? "—"}
+          fullName={profile?.full_name ?? "عميل DevPlay"}
+          isFrozen={wallet.is_frozen}
+        />
 
-            <small>
-              آخر تحديث تلقائي
-            </small>
-          </div>
-
-          <strong className="wallet-egp-balance">
-            {formatEgp(balanceEgp)}
-          </strong>
-
-          <span className="wallet-usd-equivalent">
-            يعادل {formatUsd(balanceUsd)}
-          </span>
-
+        <section className="wallet-quick-panel">
           <div className="wallet-rate-row">
             <span>
               <CircleDollarSign size={16} />
               سعر التحويل الحالي
             </span>
-
             <strong>
               1 USD ={" "}
               {exchangeRate.toLocaleString(
@@ -196,30 +195,11 @@ export default async function WalletPage() {
           </div>
 
           <div className="wallet-main-actions">
-            <Link href="/wallet/deposit">
-              <Plus size={18} />
-              إضافة رصيد
-            </Link>
-
-            <Link href="/wallet/transactions">
-              <Clock3 size={18} />
-              سجل العمليات
-            </Link>
-
-            <Link href="/wallet/transfer">
-              <Send size={18} />
-              إرسال رصيد
-            </Link>
-
-            <Link href="/wallet/receive">
-              <QrCode size={18} />
-              استلام برابط أو QR
-            </Link>
-
-            <Link href="/wallet/scan">
-              <ScanLine size={18} />
-              مسح أو رفع QR
-            </Link>
+            <Link href="/wallet/deposit"><Plus size={18} />إضافة رصيد</Link>
+            <Link href="/wallet/transactions"><Clock3 size={18} />سجل العمليات</Link>
+            <Link href="/wallet/transfer"><Send size={18} />إرسال رصيد</Link>
+            <Link href="/wallet/receive"><QrCode size={18} />استلام برابط أو QR</Link>
+            <Link href="/wallet/scan"><ScanLine size={18} />مسح أو رفع QR</Link>
           </div>
         </section>
 

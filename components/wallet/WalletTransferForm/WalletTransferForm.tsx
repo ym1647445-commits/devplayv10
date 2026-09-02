@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import { WalletTransactionAnimation } from "@/components/wallet/WalletTransactionAnimation";
 import styles from "./WalletTransferForm.module.css";
 
 interface Props { balanceUsd: number; usdRate: number; initialCustomerId?:string; initialAmount?:string }
@@ -40,7 +41,7 @@ export function WalletTransferForm({ balanceUsd, usdRate, initialCustomerId="", 
     finally{setLoading(false)}
   }
 
-  if(result)return <section className={styles.success}><CheckCircle2 size={38}/><small>تم التحويل بنجاح</small><h1>${Number(result.amount_usd).toFixed(2)}</h1><p>تم إرسال الرصيد إلى <strong>{result.recipient_customer_id}</strong>. رصيدك الحالي ${Number(result.balance_after_usd).toFixed(4)}.</p><div><Link href="/wallet/transactions">عرض سجل العمليات</Link><Link href="/wallet">العودة للمحفظة</Link></div></section>;
+  if(result)return <section className={styles.success}><WalletTransactionAnimation previousBalanceEgp={(Number(result.balance_after_usd)+Number(result.amount_usd))*usdRate} newBalanceEgp={Number(result.balance_after_usd)*usdRate} deductedAmountEgp={Number(result.amount_usd)*usdRate} successMessage="تم إرسال الرصيد بنجاح"/><CheckCircle2 size={38}/><small>تم التحويل بنجاح</small><h1>${Number(result.amount_usd).toFixed(2)}</h1><p>تم إرسال الرصيد إلى <strong>{result.recipient_customer_id}</strong>. رصيدك الحالي ${Number(result.balance_after_usd).toFixed(4)}.</p><div><Link href="/wallet/transactions">عرض سجل العمليات</Link><Link href="/wallet">العودة للمحفظة</Link></div></section>;
 
   return <form className={styles.form} onSubmit={submit}>
     <section className={styles.card}><div className={styles.heading}><span><Send size={20}/></span><div><h2>بيانات المستلم</h2><p>اطلبي من المستلم Customer ID الظاهر في حسابه. لا نستخدم البريد أو رقم الهاتف.</p></div></div><label><span>Customer ID</span><input value={customerId} onChange={e=>setCustomerId(e.target.value.toUpperCase())} placeholder="DP-000001" autoCapitalize="characters" maxLength={20}/></label></section>

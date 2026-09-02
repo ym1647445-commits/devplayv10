@@ -2,6 +2,8 @@
 
 import {
   ArrowRight,
+  BookmarkPlus,
+  Check,
   CheckCircle2,
   Heart,
   Info,
@@ -16,11 +18,15 @@ import {
   useEffect,
   useMemo,
   useState,
+  useTransition,
 } from "react";
 
 import {
   Button,
 } from "@/components/ui/Button";
+import { saveGameAccount } from "@/app/account/game-accounts/actions";
+import type { SavedGameAccount } from "@/app/account/game-accounts/types";
+import { maskGameIdentifier } from "@/lib/game-accounts/privacy";
 
 import {
   useCartStore,
@@ -125,8 +131,10 @@ interface StoreProductDetails {
 }
 
 interface ProductDetailsProps {
-  product:
-    StoreProductDetails;
+  product: StoreProductDetails;
+  authenticated: boolean;
+  savedAccounts: SavedGameAccount[];
+  savedFieldIds: string[];
 }
 
 function formatEgp(
@@ -146,8 +154,40 @@ function formatEgp(
   )} ج.م`;
 }
 
+function collectFieldErrors(
+  fields: ProductRequiredField[],
+  values: Record<string, string>,
+): Record<string, string> {
+  const errors: Record<string, string> = {};
+  fields.forEach((field) => {
+    const value = values[field.id]?.trim() ?? "";
+    if (field.required && !value) {
+      errors[field.id] = `برجاء إدخال ${field.label}.`;
+      return;
+    }
+    if (field.type === "email" && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      errors[field.id] = "برجاء إدخال بريد إلكتروني صحيح.";
+    }
+    if (field.type === "url" && value) {
+      try { new URL(value); } catch { errors[field.id] = "برجاء إدخال رابط صحيح."; }
+    }
+    if (field.pattern && value) {
+      try {
+        if (!new RegExp(field.pattern).test(value)) {
+          errors[field.id] = field.patternMessage ?? `قيمة ${field.label} غير صحيحة.`;
+        }
+      } catch {
+        // Match the existing product-form behavior for invalid admin patterns.
+      }
+    }
+  });
+  return errors;
+}
 export function ProductDetails({
   product,
+  authenticated,
+  savedAccounts: initialSavedAccounts,
+  savedFieldIds,
 }: ProductDetailsProps) {
   useEffect(()=>{try{localStorage.setItem("devplay-last-viewed-product",JSON.stringify({id:product.id,slug:product.slug,name:product.nameAr,image:product.imageUrl??"",shortDescription:product.shortDescriptionAr??"",viewedAt:new Date().toISOString()}))}catch{}},[product.id,product.slug,product.nameAr,product.imageUrl,product.shortDescriptionAr]);
   const [
@@ -183,6 +223,13 @@ export function ProductDetails({
     setMessage,
   ] = useState("");
 
+  const [localSavedAccounts, setLocalSavedAccounts] = useState(initialSavedAccounts);
+  const [activeSuggestionField, setActiveSuggestionField] = useState<string | null>(null);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState(0);
+  const [quickSaveOpen, setQuickSaveOpen] = useState(false);
+  const [quickSaveNickname, setQuickSaveNickname] = useState("");
+  const [quickSaveMessage, setQuickSaveMessage] = useState("");
+  const [savingAccount, startSavingAccount] = useTransition();
   const selectedOffer =
     useMemo(() => {
       return (
@@ -225,7 +272,52 @@ export function ProductDetails({
         .defaultRequiredFields,
     ]);
 
-  function selectOffer(offerId:string){setSelectedOfferId(offerId);setInputValues({});setFieldErrors({});setMessage("")}
+  const savedAccountCompatible = useMemo(() => {
+    const current = requiredFields.map((field) => field.id).sort();
+    const saved = [...savedFieldIds].sort();
+    return authenticated && current.length > 0 && current.length === saved.length && current.every((id, index) => id === saved[index]);
+  }, [authenticated, requiredFields, savedFieldIds]);
+
+  const compatibleSavedAccounts = useMemo(() => localSavedAccounts
+    .filter((account) => account.productId === product.id)
+    .filter((account) => requiredFields.every((field) => !field.required || Boolean(account.identifiers[field.id]?.trim())))
+    .sort((a, b) => Number(b.isDefault) - Number(a.isDefault)),
+  [localSavedAccounts, product.id, requiredFields]);
+
+  const activeSuggestions = useMemo(() => {
+    if (!activeSuggestionField || !savedAccountCompatible) return [];
+    const query = inputValues[activeSuggestionField]?.trim().toLocaleLowerCase("ar") ?? "";
+    if (!query) return compatibleSavedAccounts;
+    return compatibleSavedAccounts.filter((account) =>
+      account.nickname.toLocaleLowerCase("ar").includes(query) ||
+      account.identifiers[activeSuggestionField]?.startsWith(query),
+    );
+  }, [activeSuggestionField, compatibleSavedAccounts, inputValues, savedAccountCompatible]);
+
+  const enteredIdentifiers = useMemo(() => Object.fromEntries(
+    requiredFields
+      .map((field) => [field.id, inputValues[field.id]?.trim() ?? ""] as const)
+      .filter(([, value]) => Boolean(value)),
+  ), [inputValues, requiredFields]);
+
+  const enteredAccountValid = useMemo(() =>
+    requiredFields.length > 0 &&
+    Object.keys(enteredIdentifiers).length > 0 &&
+    Object.keys(collectFieldErrors(requiredFields, inputValues)).length === 0,
+  [enteredIdentifiers, inputValues, requiredFields]);
+
+  const enteredAccountAlreadySaved = useMemo(() => compatibleSavedAccounts.some((account) =>
+    requiredFields.every((field) => (account.identifiers[field.id]?.trim() ?? "") === (inputValues[field.id]?.trim() ?? "")),
+  ), [compatibleSavedAccounts, inputValues, requiredFields]);
+  function selectOffer(offerId: string) {
+    setSelectedOfferId(offerId);
+    setInputValues({});
+    setFieldErrors({});
+    setMessage("");
+    setActiveSuggestionField(null);
+    setHighlightedSuggestion(0);
+    setQuickSaveOpen(false);
+  }
 
   const addItem =
     useCartStore(
@@ -378,6 +470,75 @@ export function ProductDetails({
       : selectedOffer.oldPriceUsd *
         product.usdToEgpRate;
 
+  function selectSavedAccount(account: SavedGameAccount) {
+    setInputValues((current) => {
+      const next = { ...current };
+      requiredFields.forEach((field) => {
+        const value = account.identifiers[field.id];
+        if (value !== undefined) next[field.id] = value;
+      });
+      return next;
+    });
+    setFieldErrors((current) => {
+      const next = { ...current };
+      requiredFields.forEach((field) => { delete next[field.id]; });
+      return next;
+    });
+    setActiveSuggestionField(null);
+    setHighlightedSuggestion(0);
+    setMessage(`تم اختيار «${account.nickname}».`);
+  }
+
+  function handleSuggestionKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (!activeSuggestionField || activeSuggestions.length === 0) {
+      if (event.key === "Escape") setActiveSuggestionField(null);
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setHighlightedSuggestion((current) => (current + 1) % activeSuggestions.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setHighlightedSuggestion((current) => (current - 1 + activeSuggestions.length) % activeSuggestions.length);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      selectSavedAccount(activeSuggestions[highlightedSuggestion] ?? activeSuggestions[0]);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      setActiveSuggestionField(null);
+    }
+  }
+
+  function handleNewAccountSuggestion() {
+    setActiveSuggestionField(null);
+    if (enteredAccountValid && !enteredAccountAlreadySaved) openQuickSave();
+    else setMessage("اكتب بيانات الحساب الجديدة كاملة، وبعدها احفظها.");
+  }
+
+  function openQuickSave() {
+    setQuickSaveNickname("");
+    setQuickSaveMessage("");
+    setQuickSaveOpen(true);
+  }
+
+  function handleQuickSave() {
+    startSavingAccount(async () => {
+      const result = await saveGameAccount({
+        productId: product.id,
+        nickname: quickSaveNickname,
+        identifiers: enteredIdentifiers,
+      });
+      if (!result.success) {
+        setQuickSaveMessage(result.message.includes("بالفعل") ? "الحساب محفوظ بالفعل" : result.message);
+        return;
+      }
+      if (result.account) {
+        setLocalSavedAccounts((current) => [result.account!, ...current.filter((account) => account.id !== result.account!.id)]);
+      }
+      setQuickSaveOpen(false);
+      setMessage("تم حفظ الحساب في حسابات ألعابي ✓");
+    });
+   }
   function updateField(
     fieldId: string,
     value: string,
@@ -959,125 +1120,57 @@ export function ProductDetails({
                 </div>
               )}
 
-              <section
-                className={
-                  styles.requiredFields
-                }
-              >
-                <div
-                  className={
-                    styles.sectionTitle
-                  }
-                >
-                  <strong>
-                    البيانات المطلوبة
-                  </strong>
-
-                  <small>
-                    اكتب البيانات بدقة عشان الشحن يتم بدون مشاكل
-                  </small>
+              <section className={styles.requiredFields}>
+                <div className={styles.sectionTitle}>
+                  <strong>البيانات المطلوبة</strong>
+                  <small>اكتب البيانات بدقة عشان الشحن يتم بدون مشاكل</small>
                 </div>
-
-                {requiredFields.length >
-                0 ? (
-                  requiredFields.map(
-                    (field) => (
-                      <label
-                        data-companion-target="player-id"
-                        key={
-                          field.id
-                        }
-                        className={
-                          styles.inputField
-                        }
-                      >
-                        <span>
-                          {
-                            field.label
-                          }
-
-                          {field.required && (
-                            <b>
-                              *
-                            </b>
-                          )}
-                        </span>
-
-                        <input
-                          type={
-                            field.type
-                          }
-                          value={
-                            inputValues[
-                              field.id
-                            ] ??
-                            ""
-                          }
-                          placeholder={
-                            field.placeholder
-                          }
-                          inputMode={
-                            field.type ===
-                            "number"
-                              ? "numeric"
-                              : undefined
-                          }
-                          onChange={(
-                            event,
-                          ) =>
-                            updateField(
-                              field.id,
-                              event
-                                .target
-                                .value,
-                            )
-                          }
-                          aria-invalid={
-                            Boolean(
-                              fieldErrors[
-                                field.id
-                              ],
-                            )
-                          }
-                        />
-
-                        {fieldErrors[
-                          field.id
-                        ] ? (
-                          <small
-                            className={
-                              styles.fieldError
-                            }
-                          >
-                            {
-                              fieldErrors[
-                                field.id
-                              ]
-                            }
-                          </small>
-                        ) : (
-                          field.helperText && (
-                            <small>
-                              {
-                                field.helperText
-                              }
-                            </small>
-                          )
-                        )}
-                      </label>
-                    ),
-                  )
-                ) : (
-                  <div
-                    className={
-                      styles.noFields
-                    }
-                  >
-                    لا تحتاج هذه الباقة لبيانات إضافية.
-                  </div>
+                {requiredFields.length > 0 ? requiredFields.map((field) => (
+                  <label data-companion-target="player-id" key={field.id} className={styles.inputField}>
+                    <span>{field.label}{field.required && <b>*</b>}</span>
+                    <input
+                      type={field.type}
+                      value={inputValues[field.id] ?? ""}
+                      placeholder={field.placeholder}
+                      inputMode={field.type === "number" ? "numeric" : undefined}
+                      onChange={(event) => { updateField(field.id, event.target.value); setHighlightedSuggestion(0); }}
+                      onFocus={() => { setActiveSuggestionField(field.id); setHighlightedSuggestion(0); }}
+                      onBlur={() => window.setTimeout(() => setActiveSuggestionField((current) => current === field.id ? null : current), 140)}
+                      onKeyDown={handleSuggestionKeyDown}
+                      aria-invalid={Boolean(fieldErrors[field.id])}
+                      role={savedAccountCompatible ? "combobox" : undefined}
+                      aria-expanded={savedAccountCompatible && activeSuggestionField === field.id}
+                      aria-controls={savedAccountCompatible ? `saved-accounts-${field.id}` : undefined}
+                      aria-autocomplete={savedAccountCompatible ? "list" : undefined}
+                      autoComplete="off"
+                    />
+                    {activeSuggestionField === field.id && activeSuggestions.length > 0 && (
+                      <div className={styles.savedSuggestions} id={`saved-accounts-${field.id}`} role="listbox" aria-label="حساباتك المحفوظة">
+                        <header>حساباتك المحفوظة</header>
+                        <div>
+                          {activeSuggestions.map((account, index) => {
+                            const primary = account.identifiers[field.id] ?? Object.values(account.identifiers)[0] ?? "";
+                            return <button type="button" role="option" aria-selected={index === highlightedSuggestion} key={account.id} onMouseDown={(event) => event.preventDefault()} onClick={() => selectSavedAccount(account)}>
+                              <span className={styles.savedSuggestionImage}>{product.imageUrl ? <img src={product.imageUrl} alt="" /> : <Sparkles size={16} />}</span>
+                              <span><strong>{account.nickname}</strong><small dir="ltr">{maskGameIdentifier(primary)}</small></span>
+                              {account.isDefault && <b>افتراضي</b>}
+                              {index === highlightedSuggestion && <Check size={15} />}
+                            </button>;
+                          })}
+                        </div>
+                        <button type="button" className={styles.newAccountSuggestion} onMouseDown={(event) => event.preventDefault()} onClick={handleNewAccountSuggestion}><BookmarkPlus size={15} /> إضافة حساب جديد</button>
+                      </div>
+                    )}
+                    {fieldErrors[field.id] ? <small className={styles.fieldError}>{fieldErrors[field.id]}</small> : field.helperText ? <small>{field.helperText}</small> : null}
+                  </label>
+                )) : <div className={styles.noFields}>لا تحتاج هذه الباقة لبيانات إضافية.</div>}
+                {savedAccountCompatible && enteredAccountValid && !enteredAccountAlreadySaved && (
+                  <button type="button" className={styles.quickSaveAction} onClick={openQuickSave}><BookmarkPlus size={16} /> حفظ هذا الحساب في «حسابات ألعابي»</button>
+                )}
+                {savedAccountCompatible && enteredAccountAlreadySaved && (
+                  <small className={styles.alreadySaved}><CheckCircle2 size={14} /> الحساب محفوظ بالفعل في «حسابات ألعابي»</small>
                 )}
               </section>
-
               {selectedOffer.instructionsAr && (
                 <section
                   className={
@@ -1157,6 +1250,32 @@ export function ProductDetails({
           </div>
         </section>
       </div>
-    </section>
+      {quickSaveOpen && (
+        <div className={styles.quickSaveOverlay} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !savingAccount) setQuickSaveOpen(false); }}>
+          <section className={styles.quickSaveSheet} role="dialog" aria-modal="true" aria-labelledby="quick-save-title">
+            <header>
+              <div><small>حسابات ألعابي</small><h2 id="quick-save-title">حفظ في حسابات ألعابي</h2></div>
+              <button type="button" onClick={() => setQuickSaveOpen(false)} disabled={savingAccount} aria-label="إغلاق">×</button>
+            </header>
+            <div className={styles.quickSaveBody}>
+              <div className={styles.quickSaveGame}>
+                <span>{product.imageUrl ? <img src={product.imageUrl} alt="" /> : <Sparkles size={20} />}</span>
+                <div><small>اللعبة</small><strong>{product.nameAr}</strong></div>
+                <b dir="ltr">{maskGameIdentifier(Object.values(enteredIdentifiers)[0] ?? "")}</b>
+              </div>
+              <label className={styles.quickSaveField}>
+                <span>اسم مميز للحساب *</span>
+                <input value={quickSaveNickname} maxLength={40} onChange={(event) => setQuickSaveNickname(event.target.value)} placeholder="مثال: حسابي الأساسي" autoComplete="off" autoFocus />
+                <small>اسم يساعدك تفرق بين حساباتك.</small>
+              </label>
+              {quickSaveMessage && <div className={styles.quickSaveMessage}>{quickSaveMessage}</div>}
+            </div>
+            <footer>
+              <button type="button" onClick={() => setQuickSaveOpen(false)} disabled={savingAccount}>إلغاء</button>
+              <button type="button" className={styles.quickSaveConfirm} onClick={handleQuickSave} disabled={savingAccount}>{savingAccount ? "جارٍ الحفظ..." : "حفظ الحساب"}</button>
+            </footer>
+          </section>
+        </div>
+      )}    </section>
   );
 }

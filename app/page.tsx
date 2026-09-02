@@ -18,7 +18,8 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { CommunityPreview } from "@/components/home/CommunityPreview";
+import { AuthenticatedWalletHero } from "@/components/home/AuthenticatedWalletHero";
+import { QuickRecharge } from "@/components/home/QuickRecharge";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
@@ -94,7 +95,14 @@ export default function HomePage() {
     <AppShell>
       <section className="mobile-home">
         <div className="home-usage-ticker" aria-label="طريقة استخدام DevPlay"><div>{["اختاري اللعبة والباقـة","أدخلي Player ID أو البريد بدقة","راجعي الطلب وادفعي من المحفظة","نتابع التنفيذ تلقائيًا مع المورد","الكود أو الشحن يظهر داخل طلباتك"].map((text,index)=><span key={text}><b>{index+1}</b>{text}<ArrowLeft size={13}/></span>)}</div></div>
-        <section className="home-discovery-hero">
+        {user ? (
+          <AuthenticatedWalletHero
+            balanceEgp={balanceEgp}
+            balanceUsd={balanceUsd}
+            firstName={firstName}
+          />
+        ) : (
+          <section className="home-discovery-hero">
           <div className="home-hero-copy">
             <span className="home-hero-status"><i /> PREMIUM GAMING HUB</span>
             <span className="welcome-label">{user ? `أهلًا ${firstName ?? "بيك"}` : "مرحبًا بك في DevPlay"}</span>
@@ -117,6 +125,9 @@ export default function HomePage() {
             <Link href={user ? "/wallet/deposit" : "/auth"}><Button size="small">{user ? "إضافة رصيد" : "تسجيل الدخول"}</Button></Link>
           </aside>
         </section>
+        )}
+
+        {user && <QuickRecharge userId={user.id} />}
 
         <div className="welcome-row home-legacy-intro">
           <div>
@@ -261,7 +272,7 @@ export default function HomePage() {
 
         {lastViewed&&<section><div className="section-title-row"><div><h2>آخر منتج شاهدتيه</h2><span className="section-subtitle">ارجعي له بسرعة وكمّلي طلبك</span></div></div><Link className="last-viewed-product" href={`/products/${lastViewed.slug}`}>{lastViewed.image?<img src={lastViewed.image} alt={lastViewed.name}/>:<span><Gamepad2/></span>}<div><small>CONTINUE EXPLORING</small><strong>{lastViewed.name}</strong><p>{lastViewed.shortDescription||"افتحي المنتج واختاري الباقة المناسبة."}</p></div><ArrowLeft/></Link></section>}
 
-        <CommunityPreview />
+
 
         <section className="home-trust-strip">{[{icon:Zap,title:"تنفيذ سريع",text:"ربط مباشر مع المورد ومتابعة حالة الطلب."},{icon:ShieldCheck,title:"محفظة آمنة",text:"السعر والخصم والرصيد يتم التحقق منها على السيرفر."},{icon:Headphones,title:"دعم حقيقي",text:"فريق DevPlay يتابع معك أي مشكلة حتى الحل."}].map(item=>{const Icon=item.icon;return <article key={item.title}><Icon/><div><strong>{item.title}</strong><p>{item.text}</p></div></article>})}</section>
 

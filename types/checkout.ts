@@ -18,6 +18,8 @@ export interface CheckoutOrderResult {
   discountUsd: number;
   totalUsd: number;
   totalEgp: number;
+  walletBalanceAfterUsd: number | null;
+  walletBalanceAfterEgp: number | null;
   status: string;
 }
 

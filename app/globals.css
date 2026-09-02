@@ -1562,7 +1562,7 @@ html[data-reduce-motion="true"] .home-usage-ticker>div{animation:none}@media(pre
   font-weight: 800;
 }
 
-.wallet-main-card {
+.wallet-quick-panel {
   position: relative;
   overflow: hidden;
 
@@ -1593,7 +1593,7 @@ html[data-reduce-motion="true"] .home-usage-ticker>div{animation:none}@media(pre
   box-shadow: var(--shadow-medium);
 }
 
-.wallet-main-card::after {
+.wallet-quick-panel::after {
   content: "";
 
   position: absolute;

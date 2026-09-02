@@ -35,6 +35,6 @@
 @media (min-width: 1024px) {
   .content {
     width: min(1180px, calc(100% - 32px));
-    padding: 28px 0 50px;
+    padding: 28px 0 calc(var(--bottom-nav-height) + 48px);
   }
 }

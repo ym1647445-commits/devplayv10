@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   ChevronDown,
   CircleUserRound,
   Coins,
@@ -13,7 +12,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  ShoppingCart,
   TicketPercent,
   WalletCards,
   Headphones,
@@ -31,6 +29,7 @@ import {
   useCartStore,
 } from "@/stores/cartStore";
 
+import { HeaderQuickPreviews } from "./HeaderQuickPreviews";
 import styles from "./Header.module.css";
 
 function formatEgpBalance(
@@ -200,18 +199,8 @@ export function Header() {
         href="/"
         aria-label="الصفحة الرئيسية"
       >
-        <span className={styles.logo}>
-          DP
-        </span>
-
-        <span className={styles.brandText}>
-          <strong>
-            DevPlay
-          </strong>
-
-          <small>
-            TOP UP
-          </small>
+        <span className={styles.signature} dir="ltr">
+          DevPlay
         </span>
       </Link>
 
@@ -252,42 +241,12 @@ export function Header() {
         >
           <Search size={19} />
         </Link>
-
-        <Link
-          className={styles.iconButton}
-          href="/notifications"
-          aria-label="الإشعارات"
-        >
-          <Bell size={19} />
-
-          {isLoggedIn && (
-            <span
-              className={
-                styles.notificationDot
-              }
-            />
-          )}
-        </Link>
-
-        <Link
-          className={styles.iconButton}
-          href="/cart"
-          aria-label={`السلة، ${itemsCount} عناصر`}
-        >
-          <ShoppingCart size={19} />
-
-          {itemsCount > 0 && (
-            <span
-              className={
-                styles.cartCount
-              }
-            >
-              {itemsCount > 99
-                ? "+99"
-                : itemsCount}
-            </span>
-          )}
-        </Link>
+        <HeaderQuickPreviews
+          items={items}
+          itemsCount={itemsCount}
+          isLoggedIn={isLoggedIn}
+          userId={user?.id}
+        />
 
         {loading ? (
           <span

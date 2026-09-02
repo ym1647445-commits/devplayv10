@@ -1,0 +1,269 @@
+.overlay {
+  position: fixed;
+  z-index: 10020;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  padding: 18px;
+  place-items: center;
+  background: rgba(3, 3, 10, .82);
+  backdrop-filter: blur(18px);
+  animation: overlayIn 260ms ease both;
+}
+
+.ambient {
+  position: absolute;
+  width: min(85vw, 720px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  filter: blur(100px);
+  animation: ambientPulse 2.4s ease-in-out infinite;
+}
+
+.wallet {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  overflow: hidden;
+  width: min(calc(100vw - 32px), 760px);
+  margin: auto;
+  min-height: clamp(390px, 58dvh, 480px);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 14px;
+  padding: clamp(18px, 5vw, 28px);
+  border: 1px solid color-mix(in srgb, var(--primary) 48%, rgba(255, 255, 255, .18));
+  border-radius: clamp(22px, 5vw, 30px);
+  background:
+    radial-gradient(circle at 13% 5%, color-mix(in srgb, var(--primary) 50%, transparent), transparent 38%),
+    radial-gradient(circle at 88% 94%, color-mix(in srgb, var(--secondary) 18%, transparent), transparent 38%),
+    linear-gradient(145deg, #08060e 5%, #180d2b 55%, #090711);
+  color: #fff;
+  box-shadow: 0 35px 100px rgba(0, 0, 0, .58), inset 0 1px 0 rgba(255, 255, 255, .14);
+  animation: walletFloat 3.1s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.wallet::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: .06;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  content: "";
+}
+
+.wallet header,
+.wallet footer {
+  display: flex;
+  z-index: 2;
+  align-items: center;
+}
+
+.wallet header {
+  justify-content: space-between;
+}
+
+.wallet header > span {
+  display: grid;
+  width: 42px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .07);
+  color: color-mix(in srgb, var(--primary) 68%, #fff);
+}
+
+.wallet header > div {
+  display: grid;
+  margin-inline-start: auto;
+  margin-inline-end: 10px;
+  line-height: 1;
+}
+
+.wallet header strong {
+  font-size: clamp(15px, 4vw, 21px);
+  letter-spacing: .04em;
+}
+
+.wallet header small {
+  margin-top: 5px;
+  color: color-mix(in srgb, var(--primary) 75%, #fff);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .27em;
+}
+
+.wallet header > svg {
+  color: rgba(255, 255, 255, .55);
+}
+
+.balance {
+  display: grid;
+  z-index: 2;
+  align-self: center;
+  justify-items: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.balance small {
+  color: rgba(255, 255, 255, .58);
+  font-size: clamp(9px, 2.5vw, 12px);
+}
+
+.balance strong {
+  font-size: clamp(31px, 9vw, 51px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 950;
+  letter-spacing: -.045em;
+  line-height: 1.12;
+  text-shadow: 0 0 28px color-mix(in srgb, var(--primary) 38%, transparent);
+}
+
+.wallet[data-counting="true"] .balance strong {
+  color: color-mix(in srgb, var(--primary) 55%, #fff);
+}
+
+.deduction {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  width: min(100%, 330px);
+  min-height: 74px;
+  margin-inline: auto;
+  padding: 12px 18px;
+  place-content: center;
+  gap: 3px;
+  border: 1px solid rgba(255, 118, 145, .34);
+  border-radius: 16px;
+  background: rgba(45, 8, 20, .78);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .28);
+  opacity: 0;
+  text-align: center;
+  transform: translateY(-10px);
+  animation: deductionIn 420ms ease 360ms forwards;
+}
+
+.deduction span {
+  color: rgba(255, 255, 255, .55);
+  font-size: 10px;
+}
+
+.deduction strong {
+  color: #ff879f;
+  font-size: clamp(20px, 4vw, 27px);
+  font-variant-numeric: tabular-nums;
+}
+
+.wallet footer {
+  align-self: end;
+  justify-content: space-between;
+}
+
+.wallet footer small {
+  color: rgba(255, 255, 255, .48);
+  font-size: 8px;
+}
+
+.chip {
+  display: grid;
+  width: 47px;
+  aspect-ratio: 1.28 / 1;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 9px;
+  background: linear-gradient(135deg, #fff1a1, #ae7824 47%, #ffe17a 68%, #9b6519);
+}
+
+.chip i {
+  border: 1px solid rgba(75, 43, 4, .28);
+}
+
+.success {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 20px;
+  background: linear-gradient(145deg, rgba(7, 6, 14, .94), rgba(21, 12, 38, .96));
+  text-align: center;
+  animation: successIn 300ms ease both;
+}
+
+.success span {
+  display: grid;
+  width: 62px;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success);
+  box-shadow: 0 0 35px color-mix(in srgb, var(--success) 16%, transparent);
+}
+
+.success strong {
+  font-size: clamp(17px, 5vw, 24px);
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+}
+
+@keyframes walletFloat {
+  0% { opacity: 0; transform: translateY(30px) scale(.9) rotateX(8deg); }
+  18% { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
+  48% { transform: translateY(-7px) scale(1.01); }
+  78% { transform: translateY(2px) scale(1); }
+}
+
+@keyframes ambientPulse {
+  50% { opacity: .6; transform: scale(1.12); }
+}
+
+@keyframes deductionIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes successIn {
+  from { opacity: 0; transform: scale(.98); }
+}
+
+@media (max-width: 420px) {
+  .overlay { padding: 8px; }
+  .wallet { width: 100%; min-height: min(430px, 72dvh); padding: 20px; border-radius: 24px; gap: 16px; }
+  .deduction { width: min(100%, 280px); min-height: 70px; }
+  .balance strong { font-size: clamp(36px, 11vw, 46px); }
+}
+
+:global(html[data-reduce-motion="true"]) .overlay,
+:global(html[data-reduce-motion="true"]) .ambient,
+:global(html[data-reduce-motion="true"]) .wallet,
+:global(html[data-reduce-motion="true"]) .deduction,
+:global(html[data-reduce-motion="true"]) .success {
+  animation: none !important;
+}
+
+:global(html[data-reduce-motion="true"]) .deduction {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .ambient,
+  .wallet,
+  .deduction,
+  .success {
+    animation: none !important;
+  }
+
+  .deduction {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

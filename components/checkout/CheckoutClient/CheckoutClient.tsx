@@ -19,6 +19,7 @@ import {
   trackAssistantRequest,
 } from "@/components/assistant/visualAssistantEvents";
 import { Button } from "@/components/ui/Button";
+import { WalletTransactionAnimation } from "@/components/wallet/WalletTransactionAnimation";
 import {
   formatUsd,
   getProductPriceUsd,
@@ -303,6 +304,18 @@ export function CheckoutClient() {
       <section
         className={styles.successCard}
       >
+        {successOrder.walletBalanceAfterEgp !== null && (
+          <WalletTransactionAnimation
+            previousBalanceEgp={
+              successOrder.walletBalanceAfterEgp +
+              successOrder.totalEgp
+            }
+            newBalanceEgp={successOrder.walletBalanceAfterEgp}
+            deductedAmountEgp={successOrder.totalEgp}
+            successMessage="تم إنشاء الطلب بنجاح"
+          />
+        )}
+
         <span
           className={styles.successIcon}
         >

@@ -2,7 +2,7 @@ import {
   Bell,
   ChevronLeft,
   CircleUserRound,
-  Gift,
+  Gamepad2,
   LogOut,
   PackageSearch,
   Settings,
@@ -178,6 +178,12 @@ export default async function AccountPage() {
     wallet?.is_frozen ?? false;
 
   const menuItems = [
+    {
+      title: "حسابات ألعابي",
+      description: "احفظ Player ID وحسابات الشحن بأمان",
+      href: "/account/game-accounts",
+      icon: Gamepad2,
+    },
     {
       title: "خدمة العملاء",
       description: "أرسل مشكلة أو اقتراحًا وتابع رد الإدارة",

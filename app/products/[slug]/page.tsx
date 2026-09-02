@@ -17,6 +17,8 @@ import {
 import type {
   ProductRequiredField,
 } from "@/types/product";
+import type { SavedGameAccount } from "@/app/account/game-accounts/types";
+import { resolveGameAccountFields } from "@/lib/game-accounts/catalog";
 
 interface StoreOfferRow {
   id: string;
@@ -155,6 +157,7 @@ export default async function ProductPage({
   const [
     productResult,
     settingsResult,
+    userResult,
   ] = await Promise.all([
     supabase
       .from(
@@ -227,6 +230,7 @@ export default async function ProductPage({
           | string
           | null;
       }>(),
+    supabase.auth.getUser(),
   ]);
 
   const product =
@@ -284,9 +288,33 @@ export default async function ProductPage({
           b.sort_order,
       );
 
+  const compatibleFields = resolveGameAccountFields(product.required_fields, offers);
+  let savedAccounts: SavedGameAccount[] = [];
+  const user = userResult.data.user;
+  if (user && compatibleFields.length > 0) {
+    const { data } = await supabase
+      .from("saved_game_accounts")
+      .select("id, product_id, nickname, identifiers, is_default, created_at, updated_at")
+      .eq("user_id", user.id)
+      .eq("product_id", product.id)
+      .order("is_default", { ascending: false })
+      .order("updated_at", { ascending: false });
+    savedAccounts = (data ?? []).map((row) => ({
+      id: row.id,
+      productId: row.product_id,
+      nickname: row.nickname,
+      identifiers: row.identifiers as Record<string, string>,
+      isDefault: row.is_default,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
   return (
     <AppShell>
       <ProductDetails
+        authenticated={Boolean(user)}
+        savedAccounts={savedAccounts}
+        savedFieldIds={compatibleFields.map((field) => field.id)}
         product={{
           id:
             product.id,

@@ -694,6 +694,25 @@ export async function createCheckoutOrder(
     const order =
       rawOrder as CreatedOrderRow;
 
+    const {
+      data: walletAfter,
+      error: walletAfterError,
+    } = await supabase
+      .from("account_wallet_balances")
+      .select("balance_usd, balance_egp")
+      .eq("user_id", user.id)
+      .maybeSingle<{
+        balance_usd: number | string;
+        balance_egp: number | string;
+      }>();
+
+    if (walletAfterError) {
+      console.error(
+        "CHECKOUT WALLET BALANCE READ ERROR:",
+        walletAfterError,
+      );
+    }
+
     after(async () => {
       try {
         await dispatchCreatedOrder(
@@ -778,6 +797,16 @@ export async function createCheckoutOrder(
             order
               .total_egp_snapshot,
           ),
+
+        walletBalanceAfterUsd:
+          walletAfter
+            ? Number(walletAfter.balance_usd)
+            : null,
+
+        walletBalanceAfterEgp:
+          walletAfter
+            ? Number(walletAfter.balance_egp)
+            : null,
 
         status:
           order.status,

@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
   ChevronLeft,
   CircleDollarSign,
@@ -132,6 +133,42 @@ export function OrdersHistory({
 
   const [expandedOrderId, setExpandedOrderId] =
     useState<string | null>(null);
+
+  const [copyStatus, setCopyStatus] = useState<{
+    key: string;
+    state: "copied" | "error";
+  } | null>(null);
+
+  async function copyDeliveredCode(code: string, key: string): Promise<void> {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = code;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+
+        const copied = document.execCommand("copy");
+        input.remove();
+
+        if (!copied) {
+          throw new Error("Copy command failed");
+        }
+      }
+
+      setCopyStatus({ key, state: "copied" });
+    } catch {
+      setCopyStatus({ key, state: "error" });
+    }
+
+    window.setTimeout(() => {
+      setCopyStatus((current) => current?.key === key ? null : current);
+    }, 1800);
+  }
 
   const filteredOrders = useMemo(() => {
     const normalizedSearch =
@@ -466,7 +503,7 @@ export function OrdersHistory({
                     )}
 
                     {order.deliveredCodes&&order.deliveredCodes.length>0&&(
-                      <div className={styles.deliveredCodes}><strong>أكواد التفعيل</strong><p>احتفظي بالكود في مكان آمن ولا تشاركيه مع أي شخص.</p>{order.deliveredCodes.map((code,index)=><div key={`${code}-${index}`}><code dir="ltr">{code}</code><button type="button" onClick={()=>void navigator.clipboard.writeText(code)} aria-label="نسخ الكود"><Copy size={14}/> نسخ</button></div>)}</div>
+                      <div className={styles.deliveredCodes}><strong>أكواد التفعيل</strong><p>احتفظي بالكود في مكان آمن ولا تشاركيه مع أي شخص.</p>{order.deliveredCodes.map((code,index)=>{const copyKey=`${order.id}-${index}`;const status=copyStatus?.key===copyKey?copyStatus.state:null;return <div key={`${code}-${index}`}><code dir="ltr">{code}</code><button type="button" onClick={()=>void copyDeliveredCode(code,copyKey)} aria-label={status==="copied"?"تم نسخ الكود":status==="error"?"تعذر نسخ الكود":"نسخ الكود"}>{status==="copied"?<Check size={14}/>:<Copy size={14}/>} {status==="copied"?"تم النسخ":status==="error"?"تعذر النسخ":"نسخ"}</button></div>})}</div>
                     )}
 
                     {order.deliveredCodes?.length && order.codeRedemption ? (
